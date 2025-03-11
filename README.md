@@ -88,58 +88,85 @@ Please read through the whole README.md before cloning the repo.
 
     ```text
    # OmniH2O Training and Playing Teacher Policy 
+   # HYDRA_FULL_ERROR=1 \
+   # python legged_gym/scripts/train_hydra.py \
+   # --config-name=config_teleop \
+   # task=h1:teleop run_name=OmniH2O_TEACHER \
+   # env.num_observations=913 \
+   # env.num_privileged_obs=990 \
+   # motion.teleop_obs_version=v-teleop-extend-max-full \
+   # motion=motion_full \
+   # motion.extend_head=True \
+   # num_envs=4096 \
+   # asset.zero_out_far=False \
+   # asset.termination_scales.max_ref_motion_distance=1.5 \
+   # sim_device=cuda:0 \
+   # motion.motion_file=resources/motions/h1/stable_punch.pkl \
+   # rewards=rewards_teleop_omnih2o_teacher \
+   # rewards.penalty_curriculum=True \
+   # rewards.penalty_scale=0.5 \
+   # headless=True 
+
+   HYDRA_FULL_ERROR=1 \
    python legged_gym/scripts/train_hydra.py \
    --config-name=config_teleop \
-   task=h1:teleop run_name=OmniH2O_TEACHER \
+   task=h1:teleop \
+   run_name=OmniH2O_TEACHER_0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses \
    env.num_observations=913 \
    env.num_privileged_obs=990 \
    motion.teleop_obs_version=v-teleop-extend-max-full \
    motion=motion_full \
    motion.extend_head=True \
-   num_envs=4096 \
+   num_envs=2 \
    asset.zero_out_far=False \
    asset.termination_scales.max_ref_motion_distance=1.5 \
-   sim_device=cuda:0 \
-   motion.motion_file=resources/motions/h1/stable_punch.pkl \
+   sim_device=cuda:1 \
+   motion.motion_file=resources/motions/h1/0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses.pkl \
    rewards=rewards_teleop_omnih2o_teacher \
    rewards.penalty_curriculum=True \
-   rewards.penalty_scale=0.5
+   rewards.penalty_scale=0.5 \
+   headless=True 
+
 
    # OmniH2O Play Teacher Policy
-    python  legged_gym/scripts/play_hydra.py \
-    --config-name=config_teleop \
-    task=h1:teleop \
-    env.num_observations=913 \
-    env.num_privileged_obs=990 \
-    motion.future_tracks=True \
-    motion.teleop_obs_version=v-teleop-extend-max-full \
-    motion=motion_full  \
-    motion.extend_head=True \
-    asset.zero_out_far=False \
-    asset.termination_scales.max_ref_motion_distance=10.0  \
-    sim_device=cuda:0 \
-    load_run=OmniH2O_TEACHER \
-    checkpoint=XXXX \
-    num_envs=1 \
-    headless=False
+   HYDRA_FULL_ERROR=1 \
+   python  legged_gym/scripts/play_hydra.py \
+   --config-name=config_teleop \
+   task=h1:teleop \
+   env.num_observations=913 \
+   env.num_privileged_obs=990 \
+   motion.future_tracks=True \
+   motion.teleop_obs_version=v-teleop-extend-max-full \
+   motion=motion_full  \
+   motion.extend_head=True \
+   motion.motion_file=resources/motions/h1/0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses.pkl \
+   asset.zero_out_far=False \
+   asset.termination_scales.max_ref_motion_distance=10.0  \
+   sim_device=cuda:0 \
+   load_run=25_03_09_20-04-34_OmniH2O_TEACHER_0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses \
+   checkpoint=10000 \
+   num_envs=1 \
+   rewards=rewards_teleop_omnih2o_teacher \
+   headless=False
    ```
 2. Try training and playing **sim2real deploy policy**.
    ```text
    # OmniH2O Distill Student Policy
+   HYDRA_FULL_ERROR=1 \
    python legged_gym/scripts/train_hydra.py \
    --config-name=config_teleop \
    task=h1:teleop \
-   run_name=OmniH2O_STUDENT \
+   run_name=OmniH2O_STUDENT_0-ACCAD_Male2Walking_c3d_B17_Walk_to_hop_to_walk_a_poses \
    env.num_observations=1665 \
    env.num_privileged_obs=1742 \
    motion.teleop_obs_version=v-teleop-extend-vr-max-nolinvel \
    motion.teleop_selected_keypoints_names=[] \
    motion.extend_head=True \
-   num_envs=4096 \
+   num_envs=8192 \
    asset.zero_out_far=False \
    asset.termination_scales.max_ref_motion_distance=1.5 \
    sim_device=cuda:0 \
-   motion.motion_file=resources/motions/h1/stable_punch.pkl \
+   motion.motion_file=resources/motions/h1/0-ACCAD_Male2Walking_c3d_B17_Walk_to_hop_to_walk_a_poses.pkl \
    rewards=rewards_teleop_omnih2o_teacher \
    rewards.penalty_curriculum=True \
    rewards.penalty_scale=0.5 \
@@ -149,11 +176,13 @@ Please read through the whole README.md before cloning the repo.
    env.short_history_length=25 \
    noise.add_noise=False \
    noise.noise_level=0 \
-   train.dagger.load_run_dagger=TEACHER_RUN_NAME \
-   train.dagger.checkpoint_dagger=XXX \
-   train.dagger.dagger_only=True
+   train.dagger.load_run_dagger=25_03_08_18-50-04_OmniH2O_TEACHER_0-ACCAD_Male2Walking_c3d_B17_Walk_to_hop_to_walk_a_poses \
+   train.dagger.checkpoint_dagger=20500 \
+   train.dagger.dagger_only=True \
+   headless=True
 
    # OmniH2O Play Student Policy
+   HYDRA_FULL_ERROR=1 \
    python legged_gym/scripts/play_hydra.py \
    --config-name=config_teleop \
    task=h1:teleop \
@@ -166,8 +195,10 @@ Please read through the whole README.md before cloning the repo.
    asset.zero_out_far=False \
    asset.termination_scales.max_ref_motion_distance=10.0 \
    sim_device=cuda:0 \
-   load_run=OmniH2O_STUDENT \
-   checkpoint=XXXX \
+   load_run=25_03_09_14-56-05_OmniH2O_TEACHER_0-ACCAD_Male2Walking_c3d_B17_Walk_to_hop_to_walk_a_poses \
+   motion.motion_file=resources/motions/h1/0-ACCAD_Male2Walking_c3d_B17_Walk_to_hop_to_walk_a_poses.pkl \
+   checkpoint=1000 \
+   rewards=rewards_teleop_omnih2o_teacher \
    env.add_short_history=True \
    env.short_history_length=25 \
    headless=False 
@@ -179,6 +210,7 @@ Please read through the whole README.md before cloning the repo.
     **0-step MLP**
     ```text
     # OmniH2O Distill 0-step MLP Student Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop task=h1:teleop \
     run_name=OmniH2O_STUDENT_0stepMLP \
@@ -205,6 +237,7 @@ Please read through the whole README.md before cloning the repo.
     train.dagger.dagger_only=True
 
     # OmniH2O Play 0-step MLP Student Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/play_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop env.num_observations=90 \
@@ -225,6 +258,7 @@ Please read through the whole README.md before cloning the repo.
     **5-step MLP**
     ```text
     # OmniH2O Distill 5-step MLP Student Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -253,6 +287,7 @@ Please read through the whole README.md before cloning the repo.
     train.dagger.dagger_only=True
 
     # OmniH2O Play 5-step MLP Student Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/play_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -275,6 +310,7 @@ Please read through the whole README.md before cloning the repo.
     **50-step MLP**
     ```text
     # OmniH2O Distill 50-step MLP Student Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -303,6 +339,7 @@ Please read through the whole README.md before cloning the repo.
     train.dagger.dagger_only=True
 
     # OmniH2O Play 50-step MLP Student Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/play_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -330,6 +367,7 @@ Please read through the whole README.md before cloning the repo.
     **LSTM**
     ```text
     # OmniH2O Distill LSTM Student Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -363,6 +401,7 @@ Please read through the whole README.md before cloning the repo.
     **GRU**
     ```text
     # OmniH2O Distill GRU Student Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -400,6 +439,7 @@ Please read through the whole README.md before cloning the repo.
 
     ```text
     # OmniH2O Distill 8-point Tracking Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -428,6 +468,7 @@ Please read through the whole README.md before cloning the repo.
     train.dagger.dagger_only=True
 
     # OmniH2O Distill 23-point Tracking Policy 
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -460,6 +501,7 @@ Please read through the whole README.md before cloning the repo.
 
     ```text
     # OmniH2O Distill Student Policy with Linear Velocity
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -493,6 +535,7 @@ Please read through the whole README.md before cloning the repo.
 
     ```text
     # OmniH2O Train Sim2Real Policy with RL directly
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \
@@ -520,6 +563,7 @@ Please read through the whole README.md before cloning the repo.
 
     ```text
     # H2O Train Sim2Real Policy (8point tracking, no history, MLP, with linear velocity) with RL directly
+    HYDRA_FULL_ERROR=1 \
     python legged_gym/scripts/train_hydra.py \
     --config-name=config_teleop \
     task=h1:teleop \

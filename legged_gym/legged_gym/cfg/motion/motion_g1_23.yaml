@@ -12,7 +12,7 @@ marker_file : 'resources/objects/Marker/traj_marker.urdf'
 num_dof_pos_reference : 23
 num_dof_vel_reference : 23
 
-extend_hand: True
+extend_hand: False
 extend_head: False
 
 future_tracks: False
@@ -37,7 +37,7 @@ teleop_level_down_episode_length : 30
 # teleop_obs_version : 'v-teleop-extend'
 # teleop_obs_version : 'v-teleop-extend-nolinvel'
 # teleop_obs_version : 'v-teleop-extend-max'
-teleop_obs_version : 'v-teleop-extend-max-full'
+teleop_obs_version : 'v-teleop-extend-max-full'  #暂时先用这个
 # teleop_obs_version : 'v-teleop-extend-max-nolinvel'
 # teleop_obs_version : 'v-min2'
 

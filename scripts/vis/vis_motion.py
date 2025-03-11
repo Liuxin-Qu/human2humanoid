@@ -52,7 +52,11 @@ asset_descriptors = [
 ]
 sk_tree = SkeletonTree.from_mjcf(h1_xml)
 
-motion_file = "data/h1/test.pkl"
+# motion_file = "data/h1/test.pkl"
+# motion_file ="data/h1/separated_motions_amass_all/0_ACCAD_Male2MartialArtsKicks_c3d_G16_double_kick_poses.pkl"
+motion_file ="data/h1/separated_motions_amass_all/0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses.pkl"
+# motion_file ="data/h1/separated_motions_amass_all/0_ACCAD_Male2Walking_c3d_B21_put_down_box_to_walk_poses.pkl"
+
 if os.path.exists(motion_file):
     print(f"loading {motion_file}")
 else:

@@ -46,7 +46,7 @@ def load_amass_data(data_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--amass_root", type=str, default="/hdd/zen/data/ActBound/AMASS/AMASS_Complete")
+    parser.add_argument("--amass_root", type=str, default="/home/qlx/RL/human2humanoid/data/AMASS/AMASS_Complete")
     args = parser.parse_args()
     
     device = torch.device("cpu")
@@ -168,10 +168,10 @@ if __name__ == "__main__":
                 "fps": 30
                 }
         
-        print(f"dumping {data_key} for testing, remove the line if you want to process all data")
-        import ipdb; ipdb.set_trace()
-        joblib.dump(data_dump, "data/h1/test.pkl")
+        # print(f"dumping {data_key} for testing, remove the line if you want to process all data")
+        # import ipdb; ipdb.set_trace()
+        # joblib.dump(data_dump, "data/h1/test.pkl")
     
         
-    import ipdb; ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
     joblib.dump(data_dump, "data/h1/amass_all.pkl")

@@ -16,8 +16,8 @@ scales:
   slippage : -30.0*1.25
   feet_ori : -50.0*1.25
   in_the_air: -200 # -150 # < -1
-  stable_lower_when_vrclose: 0.00000001 #-500.0
-  stable_lower_when_vrclose_positive: 0 #-500.0
+  # stable_lower_when_vrclose: 0 #-500.0
+  # stable_lower_when_vrclose_positive: 0 #-500.0
   orientation : -200.0
   feet_height : -0
   feet_max_height_for_this_air : -2500

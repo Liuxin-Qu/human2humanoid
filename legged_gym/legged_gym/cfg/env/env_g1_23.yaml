@@ -1,7 +1,7 @@
 defaults:
   - env_base
 
-num_envs : 88
+num_envs : 4096
 # num_observations : 88 # v-min2
 # num_privileged_obs : 164 # v-min2
 # num_observations : 624
@@ -30,9 +30,14 @@ num_envs : 88
 # num_observations : 135 # v-teleop-extend-max-nolinvel
 # num_privileged_obs : 211 # v-teleop-extend-max-nolinvel
 
-num_observations : 995 # v-teleop-extend-max
-num_privileged_obs : 1092 #214 # v-teleop-extend-max
-# 990-913+995
+#motion.extend_hand=False   motion.extend_head =False 
+num_observations :  956 #995 # v-teleop-extend-max
+num_privileged_obs : 1053  #1092 #214 # v-teleop-extend-max
+ 
+#motion.extend_hand=False   motion.extend_head =False 
+# num_observations :  995 # v-teleop-extend-max
+# num_privileged_obs : 1092 #214 # v-teleop-extend-max
+
 num_actions : 23
 im_eval : False
 

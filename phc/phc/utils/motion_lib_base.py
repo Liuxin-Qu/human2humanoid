@@ -154,7 +154,7 @@ class MotionLibBase():
         
         self._num_unique_motions = len(self._motion_data_list)
         if self.mode == MotionlibMode.directory:
-            import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
             self._motion_data_load = joblib.load(self._motion_data_load[0]) # set self._motion_data_load to a sample of the data 
 
     def setup_constants(self, fix_height = FixHeightMode.full_fix, masterfoot_conifg=None, multi_thread = True):
@@ -492,6 +492,7 @@ class MotionLibBase():
             dof_vel = (1.0 - blend_exp) * dof_vel0 + blend_exp * dof_vel1
             local_rot = torch_utils.slerp(local_rot0, local_rot1, torch.unsqueeze(blend, axis=-1))
             dof_pos = self._local_rotation_to_dof_smpl(local_rot)
+            print("_local_rotation_to_dof_smpl return dof_pos shape " , dof_pos.shape)
 
         rb_rot0 = self.grs[f0l]
         rb_rot1 = self.grs[f1l]
@@ -574,5 +575,7 @@ class MotionLibBase():
 
     def _local_rotation_to_dof_smpl(self, local_rot):
         B, J, _ = local_rot.shape
+        print("dof_pos shape " , dof_pos.shape)
         dof_pos = torch_utils.quat_to_exp_map(local_rot[:, 1:])
+        print("dof_pos shape " , dof_pos.shape)
         return dof_pos.reshape(B, -1)

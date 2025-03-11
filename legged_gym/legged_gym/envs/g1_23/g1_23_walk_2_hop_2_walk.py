@@ -111,6 +111,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
             # self._track_bodies_extend_id = self._track_bodies_id + [len(self._body_list), len(self._body_list) + 1]
             self._track_bodies_extend_id = self._track_bodies_id 
             # self.extend_body_pos = torch.tensor([[0.3, 0, 0], [0.3, 0, 0]]).repeat(self.num_envs, 1, 1).to(self.device)
+            self.extend_body_pos = torch.empty((self.num_envs, 0, 3), dtype=torch.float32).to(self.device)  # 空的 (N, 0, 3) 张量
             if self.cfg.motion.extend_head:
                 self.extend_body_parent_ids += [0]
                 # self._track_bodies_id += [len(self._body_list)]
@@ -2212,7 +2213,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                 # self.root_states[env_ids, 2] += delta_height
                 # motion_res['root_pos'][env_ids,2] += delta_height
                 
-                print("motion_res['rg_pos'] shape", motion_res['rg_pos'].shape)
+                # print("motion_res['rg_pos'] shape", motion_res['rg_pos'].shape)
                 self._rigid_body_pos[env_ids] = motion_res['rg_pos'][env_ids]
                 self._rigid_body_rot[env_ids] = motion_res['rb_rot'][env_ids]
                 self._rigid_body_vel[env_ids] =   motion_res['body_vel'][env_ids]
