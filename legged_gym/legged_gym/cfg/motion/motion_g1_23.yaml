@@ -15,7 +15,7 @@ num_dof_vel_reference : 23
 extend_hand: False
 extend_head: False
 
-future_tracks: False
+future_tracks: True
 num_traj_samples: 1
 traj_sample_timestep_inv: 50
 

@@ -122,22 +122,12 @@ Please read through the whole README.md before cloning the repo.
    # OmniH2O Play Teacher Policy
    HYDRA_FULL_ERROR=1 \
    python  legged_gym/scripts/play_hydra.py \
-   --config-name=config_teleop \
-   task=h1:teleop \
-   env.num_observations=913 \
-   env.num_privileged_obs=990 \
-   motion.future_tracks=True \
-   motion.teleop_obs_version=v-teleop-extend-max-full \
-   motion=motion_full  \
-   motion.extend_head=True \
-   motion.motion_file=resources/motions/h1/0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses.pkl \
-   asset.zero_out_far=False \
-   asset.termination_scales.max_ref_motion_distance=10.0  \
+   --config-name=config_g1_23 \
+   task=g1_23:walk_2_hop_2_walk \
    sim_device=cuda:0 \
-   load_run=25_03_09_20-04-34_OmniH2O_TEACHER_0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses \
+   load_run=25_03_11_17-45-59_OmniH2O_TEACHER_G1_23_0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses \
    checkpoint=10000 \
-   num_envs=1 \
-   rewards=rewards_teleop_omnih2o_teacher \
+   num_envs=10 \
    headless=False
    ```
 2. Try training and playing **sim2real deploy policy**.

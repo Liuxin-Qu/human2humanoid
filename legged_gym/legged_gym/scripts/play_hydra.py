@@ -46,7 +46,7 @@ def dict_compare(d1, d2):
 @hydra.main(
     version_base=None,
     config_path="../cfg",
-    config_name="config_base",
+    config_name="config_g1_23",
 )
 def play(cfg_hydra: DictConfig) -> None:
     cfg_hydra = EasyDict(OmegaConf.to_container(cfg_hydra, resolve=True))
@@ -128,7 +128,7 @@ def play(cfg_hydra: DictConfig) -> None:
 
     logger = Logger(env.dt)
     robot_index = 0 # which robot is used for logging
-    joint_index = 4 # which joint is used for logging
+    joint_index = 3 # which joint is used for logging
     stop_state_log = 200 # number of steps before plotting states
     stop_rew_log = env.max_episode_length + 1 # number of steps before print average episode rewards
 
@@ -227,8 +227,10 @@ def play(cfg_hydra: DictConfig) -> None:
                     'contact_forces_z': env.contact_forces[robot_index, env.feet_indices, 2].cpu().numpy()
                 }
             )
+            print("logging_states")
         elif i==stop_state_log:
             logger.plot_states()
+            print("plot_states")
         if  0 < i < stop_rew_log:
             if infos["episode"]:
                 num_episodes = torch.sum(env.reset_buf).item()
