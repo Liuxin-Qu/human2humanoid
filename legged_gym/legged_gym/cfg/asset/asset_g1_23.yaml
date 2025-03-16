@@ -28,11 +28,11 @@ thickness : 0.01
 terminate_by_knee_distance : False
 terminate_by_lin_vel : False
 terminate_by_ang_vel : False
-terminate_by_gravity : True
+terminate_by_gravity : False
 terminate_by_low_height : False
 
-terminate_by_ref_motion_distance : True
-terminate_by_1time_motion : True
+terminate_by_ref_motion_distance : False
+terminate_by_1time_motion : False
 
 local_upper_reward : False
 zero_out_far: False # Zero out far termination
