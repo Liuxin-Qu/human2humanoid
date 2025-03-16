@@ -225,13 +225,17 @@ class G1_23_Walk_2_Hop_2_Walk_Cfg( LeggedRobotCfg ):
     class asset( LeggedRobotCfg.asset ):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/g1_description/g1_23dof.urdf'
         name = "g1_23dof"
-        foot_name = "ankle"
+        foot_name = "ankle_roll"
         penalize_contacts_on = []
         terminate_after_contacts_on = ["pelvis", "shoulder", "hip", "knee"]
         self_collisions = 1 # 1 to disable, 0 to enable...bitwise filter
         replace_cylinder_with_capsule = True
         flip_visual_attachments = False
-        force_dim = 6 
+        head_length = 0.5
+        force_dim = 3 #gym 中能测到足底线性力 
+        num_lower_dof = 12
+        num_waist_dof = 1
+        num_upper_dof = 10
   
         density = 0.001
         angular_damping = 0.
@@ -290,7 +294,7 @@ class G1_23_Walk_2_Hop_2_Walk_Cfg( LeggedRobotCfg ):
             orientation = -0.0
             teleop_selected_joint_position = 32 # 5.0
             teleop_selected_joint_vel = 16 # 5.
-            
+            # base_height =1.0
             teleop_body_position = 0.0 # 6 keypoint
             teleop_body_position_extend = 40.0 # 8 keypoint
             teleop_body_position_extend_small_sigma = 0.0 # 8 keypoint

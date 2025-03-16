@@ -32,7 +32,7 @@ num_envs : 4096
 
 #motion.extend_hand=False   motion.extend_head =False 
 num_observations :  956 #995 # v-teleop-extend-max
-num_privileged_obs : 1053  #1092 #214 # v-teleop-extend-max
+num_privileged_obs : 1045  #1092 #214 # v-teleop-extend-max
  
 #motion.extend_hand=False   motion.extend_head =False 
 # num_observations :  995 # v-teleop-extend-max

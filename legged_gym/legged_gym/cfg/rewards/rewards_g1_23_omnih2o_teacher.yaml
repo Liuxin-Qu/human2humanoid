@@ -21,7 +21,7 @@ scales:
   orientation : -200.0
   feet_height : -0
   feet_max_height_for_this_air : -2500
-  
+  # base_height : 1
 
 
   # torques : 0
@@ -108,7 +108,7 @@ soft_torque_limit : 0.85
 
 max_contact_force : 500.
 
-base_height_target : 1.
+base_height_target : 0.8
 body_pos_sigma : 0.5
 body_rot_sigma : 1.
 body_vel_sigma : 1.

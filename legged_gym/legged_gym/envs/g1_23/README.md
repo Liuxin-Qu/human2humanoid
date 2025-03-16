@@ -107,13 +107,13 @@ Please read through the whole README.md before cloning the repo.
    # rewards.penalty_scale=0.5 \
    # headless=True 
 
-   HYDRA_FULL_ERROR=1  python legged_gym/scripts/train_hydra.py  --config-name=config_g1_23 
+   HYDRA_FULL_ERROR=1  python legged_gym/scripts/train_hydra.py  --config-name=config_g1_23 num_envs=1
 
 
    # 观测维度根据extend_head=True | False 改变  True
    # motion.extend_hand=False   motion.extend_head =False 
    # num_observations :  956 #995 # v-teleop-extend-max
-   # num_privileged_obs : 1053  #1092 #214 # v-teleop-extend-max
+   # num_privileged_obs : 1045  #1092 #214 # v-teleop-extend-max
    # motion.extend_hand=False   motion.extend_head =False 
    # num_observations :  995 # v-teleop-extend-max
    # num_privileged_obs : 1092 #214 # v-teleop-extend-max

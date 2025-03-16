@@ -12,8 +12,8 @@ distill_model_config:
                    'right_hip_pitch_link', 'right_hip_roll_link', 'right_hip_yaw_link', 'right_knee_link', 'right_ankle_pitch_link','right_ankle_roll_link',
                    'torso_link', 'left_shoulder_pitch_link', 'left_shoulder_roll_link', 'left_shoulder_yaw_link', 'left_elbow_link', 'left_wrist_roll_rubber_hand',
                   'right_shoulder_pitch_link', 'right_shoulder_roll_link', 'right_shoulder_yaw_link', 'right_elbow_link','right_wrist_roll_rubber_hand']
-  num_observations: 956  # motion.extend_hand =False motion.extend_head = False #995 motion.extend_hand =False motion.extend_head = True
-  num_privileged_obs: 1053 # motion.extend_hand =False motion.extend_head = False #1092 motion.extend_hand =False motion.extend_head = True 
+  num_observations : 956  # motion.extend_hand =False motion.extend_head = False #995 motion.extend_hand =False motion.extend_head = True
+  num_privileged_obs : 1045 # motion.extend_hand =False motion.extend_head = False #1092 motion.extend_hand =False motion.extend_head = True 
 
 add_short_history: False
 short_history_length: 5
@@ -36,7 +36,7 @@ algorithm:
     
 runner:
     policy_class_name : 'ActorCritic'
-    run_name : 'OmniH2O_TEACHER_G1_23_0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses'
+    run_name : 'debug_OmniH2O_TEACHER_G1_23_0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses'
     experiment_name : 'g1_23:walk_2_hop_2_walk'
     max_iterations : 10000
     has_eval : False

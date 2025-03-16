@@ -63,7 +63,11 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
 
         super().__init__(self.cfg, sim_params, physics_engine, sim_device, headless)
         
-        self.num_extended_pos=self.num_bodies + 2* self.cfg.motion.extend_hand +1*self.cfg.motion.extend_head # 1pelvis +23 dof +add body( 1 head)
+        # assert condition, "自定义错误提示"
+        assert self.num_dof == self.cfg.asset.num_lower_dof + self.cfg.asset.num_waist_dof + self.cfg.asset.num_upper_dof, "num of robot dofs is not equal to RUDF"
+        
+        
+        self.num_extended_bodies=self.num_bodies + 2* self.cfg.motion.extend_hand +1*self.cfg.motion.extend_head # 1pelvis +23 dof +add body( 1 head)
 
         if not self.headless:
             self.set_camera(self.cfg.viewer.pos, self.cfg.viewer.lookat)
@@ -81,7 +85,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         self.trajectories = torch.zeros(self.num_envs, self.trajectories_dim * 100).to(self.device) # 23dof + 23dofvel + 3angular velocity + 3projectedgravity + 23lastaction
         self.trajectories_with_linvel = torch.zeros(self.num_envs, self.trajectories_with_linvel_dim * 100).to(self.device) # 23dof + 23dofvel + 3angular velocity + 3projectedgravity + 23lastaction
         if self.cfg.train_velocity_estimation:
-            # self.velocity_estimator = VelocityEstimator(self.trajectories_dim, 512, 256, 3, 25).to(self.device)
+            # self.velocity_estimator = VelocityEstimator(self.trajectories_dim, 512, 256, 3, self.num_extended_bodies).to(self.device)
             self.velocity_estimator = VelocityEstimatorGRU(self.trajectories_dim, 512, 3).to(self.device)
             
             
@@ -90,7 +94,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
 
         if self.cfg.use_velocity_estimation:
             load_path = os.path.join(LEGGED_GYM_ROOT_DIR, "logs/velocity_orand", "velocity_estimator_33000.pt")
-            self.velocity_estimator = VelocityEstimator(self.trajectories_dim, 512, 256, 3, 25).to(self.device)
+            self.velocity_estimator = VelocityEstimator(self.trajectories_dim, 512, 256, 3, self.num_extended_bodies).to(self.device)
             self.velocity_estimator.load_state_dict(torch.load(load_path))
 
         self.prioritize_closing = torch.zeros(self.num_envs)
@@ -103,21 +107,30 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                                                         device=self.device)
             
         if self.cfg.motion.teleop:
-            # self.extend_body_parent_ids = [15, 23]
             self.extend_body_parent_ids = []
-            # print("self._body_list",self._body_list)
-            # print("self.cfg.motion.teleop_selected_keypoints_names",self.cfg.motion.teleop_selected_keypoints_names)
             self._track_bodies_id = [self._body_list.index(body_name) for body_name in self.cfg.motion.teleop_selected_keypoints_names]
-            # self._track_bodies_extend_id = self._track_bodies_id + [len(self._body_list), len(self._body_list) + 1]
-            self._track_bodies_extend_id = self._track_bodies_id 
-            # self.extend_body_pos = torch.tensor([[0.3, 0, 0], [0.3, 0, 0]]).repeat(self.num_envs, 1, 1).to(self.device)
-            self.extend_body_pos = torch.empty((self.num_envs, 0, 3), dtype=torch.float32).to(self.device)  # 空的 (N, 0, 3) 张量
+            self._track_bodies_extend_id = self._track_bodies_id
+            # assert  self.cfg.motion.extend_head, "在这个代码中, extend_head必须设置为True,  待改进"
+            if not self.cfg.motion.extend_hand and not self.cfg.motion.extend_head:
+                self.extend_body_pos = torch.empty((self.num_envs, 0, 3), dtype=torch.float32).to(self.device)
+                
+            if self.cfg.motion.extend_hand:
+                # self.extend_body_parent_ids = [15, 23]
+                self.extend_body_parent_ids = []
+                # print("self._body_list",self._body_list)
+                # print("self.cfg.motion.teleop_selected_keypoints_names",self.cfg.motion.teleop_selected_keypoints_names)
+                self._track_bodies_id = [self._body_list.index(body_name) for body_name in self.cfg.motion.teleop_selected_keypoints_names]
+                # self._track_bodies_extend_id = self._track_bodies_id + [len(self._body_list), len(self._body_list) + 1]
+                self._track_bodies_extend_id = self._track_bodies_id 
+                # self.extend_body_pos = torch.tensor([[0.3, 0, 0], [0.3, 0, 0]]).repeat(self.num_envs, 1, 1).to(self.device)
+                self.extend_body_pos = torch.empty((self.num_envs, 0, 3), dtype=torch.float32).to(self.device)  # 空的 (N, 0, 3) 张量
             if self.cfg.motion.extend_head:
-                self.extend_body_parent_ids += [0]
+                self.extend_body_parent_ids = [0]
                 # self._track_bodies_id += [len(self._body_list)]
                 # self._track_bodies_extend_id += [len(self._body_list) + 2]
-                self._track_bodies_extend_id += [len(self._body_list)]
-                self.extend_body_pos = torch.tensor([[0, 0, 0.75]]).repeat(self.num_envs, 1, 1).to(self.device)
+                self._track_bodies_extend_id += [len(self._body_list)] # extended hend is the last one 
+                self.extend_body_pos = torch.tensor([[0, 0, self.cfg.asset.head_length]]).repeat(self.num_envs, 1, 1).to(self.device)
+            
         self.num_compute_average_epl = self.cfg.rewards.num_compute_average_epl
         self.average_episode_length = 0. # num_compute_average_epl last termination episode length
 
@@ -264,15 +277,15 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
             velocity = self.base_lin_vel
 
 
-            self.ready_for_train_indices = self.episode_length_buf > 25
+            self.ready_for_train_indices = self.episode_length_buf > self.num_extended_bodies
 
             # MLP
             train_input = self.trajectories[self.ready_for_train_indices]
 
             # GRU
-            # Reshape A into the desired shape (num_envs, 25, self.trajectories_dim)
-            # B_reshaped = train_input.reshape(train_input.shape[0], 25, self.trajectories_dim)
-            B_reshaped = train_input.reshape(train_input.shape[0], 25, self.trajectories_dim)
+            # Reshape A into the desired shape (num_envs, self.num_extended_bodies, self.trajectories_dim)
+            # B_reshaped = train_input.reshape(train_input.shape[0], self.num_extended_bodies, self.trajectories_dim)
+            B_reshaped = train_input.reshape(train_input.shape[0], self.num_extended_bodies, self.trajectories_dim)
 
             # Transpose the reshaped array to match the desired rearrangement of axes
             # B_transposed = B_reshaped.transpose(0, 2, 1)
@@ -346,10 +359,15 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         self.rpy[:] = get_euler_xyz_in_tensor(self.base_quat[:])
         self.base_lin_vel[:] = quat_rotate_inverse(self.base_quat, self.root_states[:, 7:10])
 
-        self.base_ang_vel[:] = quat_rotate_inverse(self._rigid_body_rot[:, 11, :], self._rigid_body_ang_vel[:, 11, :])
+
+        print("self._rigid_body_pos shape:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_pos.shape)
+        print("self._rigid_body_pos :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_pos)
+        print("self._rigid_body_rot shape:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_rot.shape)
+        print("self._rigid_body_rot :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_rot)
+        self.base_ang_vel[:] = quat_rotate_inverse(self._rigid_body_rot[:, self.cfg.asset.num_lower_dof +1, :], self._rigid_body_ang_vel[:, self.cfg.asset.num_lower_dof +1, :])
         
 
-        self.projected_gravity[:] = quat_rotate_inverse(self._rigid_body_rot[:, 11, :], self.gravity_vec)
+        self.projected_gravity[:] = quat_rotate_inverse(self._rigid_body_rot[:, self.cfg.asset.num_lower_dof +1, :], self.gravity_vec)
 
         self._post_physics_step_callback()
         # compute observations, rewards, resets, ...
@@ -448,7 +466,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                 
                 if self.cfg.asset.local_upper_reward:
                     diff =  ref_body_pos[:, [0]] - self._rigid_body_pos[:, [0]]
-                    ref_body_pos[:, 11:] -= diff
+                    ref_body_pos[:, self.cfg.asset.num_lower_dof +1:] -= diff
                              
 
                 if self.cfg.env.test or self.cfg.env.im_eval:
@@ -673,7 +691,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
             if self.cfg.asset.local_upper_reward:
                 ref_body_pos_extend = ref_body_pos_extend.clone()
                 diff =  ref_body_pos_extend[:, [0]] - self._rigid_body_pos[:, [0]]
-                ref_body_pos_extend[:, 11:] -= diff
+                ref_body_pos_extend[:, self.cfg.asset.num_lower_dof +1:] -= diff
             
             self.marker_coords[:] = ref_body_pos_extend.reshape(B, -1, 3)
             
@@ -1241,7 +1259,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                     
 
                 if self.cfg.use_velocity_estimation:
-                    self.ready_for_train_indices = self.episode_length_buf > 25
+                    self.ready_for_train_indices = self.episode_length_buf > self.num_extended_bodies
                     current_obs_a = self.trajectories[self.ready_for_train_indices, 0]
                     if current_obs_a.shape[0] > 0:
                         estimate_velocity = self.velocity_estimator(self.trajectories[self.ready_for_train_indices])
@@ -1353,7 +1371,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                                                 self.actions], dim = -1) # 23dim
                     
                 if self.cfg.use_velocity_estimation:
-                    self.ready_for_train_indices = self.episode_length_buf > 25
+                    self.ready_for_train_indices = self.episode_length_buf > self.num_extended_bodies
                     current_obs_a = self.trajectories[self.ready_for_train_indices, :self.trajectories_dim]
                     if current_obs_a.shape[0] > 0:
                         raise NotImplementedError
@@ -1468,7 +1486,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                                                 self.actions], dim = -1) # 23dim
                     
                 if self.cfg.use_velocity_estimation:
-                    self.ready_for_train_indices = self.episode_length_buf > 25
+                    self.ready_for_train_indices = self.episode_length_buf > self.num_extended_bodies
                     current_obs_a = self.trajectories[self.ready_for_train_indices, :self.trajectories_dim]
                     if current_obs_a.shape[0] > 0:
                         raise NotImplementedError
@@ -1524,6 +1542,14 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                 ref_body_vel_subset = ref_body_vel_extend[:, self._track_bodies_extend_id]
                 ref_body_ang_vel_subset = ref_body_ang_vel_extend[:, self._track_bodies_extend_id]
                 
+                print("self.extend_body_parent_ids shape:",self.extend_body_parent_ids)
+                print("self.extend_body_parent_ids :",self.extend_body_parent_ids)
+                print("self.extend_body_pos shape:",self.extend_body_pos.shape)
+                print("self.extend_body_parent_ids :",self.extend_body_parent_ids)
+
+                print("body_pos shape:",body_pos.shape)
+                print("extend_curr_pos shape:",extend_curr_pos.shape)
+                print("body_pos_extend shape:",body_pos_extend.shape)
                 # robot
                 dof_pos = self.dof_pos
                 dof_vel = self.dof_vel
@@ -1592,29 +1618,27 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                 # print("self_obs shape :", self_obs.shape)
                 # print("task_obs shape :", task_obs.shape)
                 # print("obs shape :", obs.shape)
-                self_obs = compute_humanoid_observations_max_full(body_pos_extend, body_rot_extend, body_vel_extend, body_ang_vel_extend, True, False) # 342  -> 372 
-                # 22 * 3 + 23 * 6 + 23 * 3 + 23 * 3  = 342 | pos, rot, vel, ang_vel
-                # 24 * 3 + 25 * 6 + 25 * 3 + 25 * 3  = 372 | pos, rot, vel, ang_vel
+                self_obs = compute_humanoid_observations_max_full(body_pos_extend, body_rot_extend, body_vel_extend, body_ang_vel_extend, True, False) # 357
+                # (self.num_extended_bodies-1) * 3 + self.num_extended_bodies * 6 + self.num_extended_bodies * 3 + self.num_extended_bodies * 3  = 372 | pos, rot, vel, ang_vel
                 task_obs = compute_imitation_observations_max_full(root_pos, root_rot, body_pos_subset, body_rot_subset, body_vel_subset, body_ang_vel_subset,  ref_rb_pos_subset, ref_rb_rot_subset, ref_body_vel_subset, ref_body_ang_vel_subset,   \
                                                                    self.cfg.motion.num_traj_samples, ref_episodic_offset = self.ref_episodic_offset)
-                 # 23 * 3 + 23 * 6 + 23 * 3 + 23 * 3 + 23 * 3 + 23 * 6  = 552 diff pos, rot, vel, ang_vel | pos, rot
-                 # 25 * 3 + 25 * 6 + 25 * 3 + 25 * 3 + 25 * 3 + 25 * 6  = 600 diff pos, rot, vel, ang_vel | pos, rot
+                 # self.num_extended_bodies * 3 + self.num_extended_bodies * 6 + self.num_extended_bodies * 3 + self.num_extended_bodies * 3 + self.num_extended_bodies * 3 + self.num_extended_bodies * 6  = 576 diff pos, rot, vel, ang_vel | pos, rot
                 obs = torch.cat([ self_obs, 
                                             task_obs,  # 
-                                            self.actions], dim = -1) # 342 + 552 + 23 = 913  -> 372 + 600 +23 = 995
-                # print("self_obs shape :", self_obs.shape)
+                                            self.actions], dim = -1) #  357 + 576 +23 = 956
+                print("self_obs shape :", self_obs.shape)
                 
-                # print("root_pos shape :", root_pos.shape)
-                # print("root_rot shape :", root_rot.shape)
-                # print("body_pos_subset shape :", body_pos_subset.shape)
-                # print("body_vel_subset shape :", body_vel_subset.shape)
-                # print("body_ang_vel_subset shape :", body_ang_vel_subset.shape)
-                # print("ref_rb_pos_subset shape :", ref_rb_pos_subset.shape)
-                # print("ref_rb_rot_subset shape :", ref_rb_rot_subset.shape)
-                # print("ref_body_vel_subset shape :", ref_body_vel_subset.shape)
-                # print("ref_body_ang_vel_subset shape :", ref_body_ang_vel_subset.shape)
-                # print("task_obs shape :", task_obs.shape)
-                # print("obs shape :", obs.shape)
+                print("root_pos shape :", root_pos.shape)
+                print("root_rot shape :", root_rot.shape)
+                print("body_pos_subset shape :", body_pos_subset.shape)
+                print("body_vel_subset shape :", body_vel_subset.shape)
+                print("body_ang_vel_subset shape :", body_ang_vel_subset.shape)
+                print("ref_rb_pos_subset shape :", ref_rb_pos_subset.shape)
+                print("ref_rb_rot_subset shape :", ref_rb_rot_subset.shape)
+                print("ref_body_vel_subset shape :", ref_body_vel_subset.shape)
+                print("ref_body_ang_vel_subset shape :", ref_body_ang_vel_subset.shape)
+                print("task_obs shape :", task_obs.shape)
+                print("obs shape :", obs.shape)
                 
             elif self.cfg.motion.teleop_obs_version == 'v-teleop-extend-max-nolinvel':
                 body_pos = self._rigid_body_pos
@@ -1766,7 +1790,6 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
             ], dim=1)
             privileged_obs_buf = torch.cat([obs_buf_denoise, self.privileged_info], dim=1)
             # print("privileged_obs_buf shape :", privileged_obs_buf.shape)
-                
         return obs, privileged_obs_buf
             
     def create_sim(self):
@@ -1904,7 +1927,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                         sphere_pose = gymapi.Transform(gymapi.Vec3(self.realtime_vr_keypoints_pos[vr_keypoint_idx, 0], self.realtime_vr_keypoints_pos[vr_keypoint_idx, 1], self.realtime_vr_keypoints_pos[vr_keypoint_idx, 2]), r=None)
                         gymutil.draw_lines(sphere_geom_marker, self.gym, self.viewer, self.envs[env_id], sphere_pose)
                 else:
-                    for pos_id, pos_joint in enumerate(self.marker_coords[env_id]): # idx 0 torso (duplicate with 11)
+                    for pos_id, pos_joint in enumerate(self.marker_coords[env_id]): # idx 0 torso (duplicate with self.cfg.asset.num_lower_dof +1)
                         
                         color_inner = (0.3, 0.3, 0.3) if not self.cfg.motion.visualize_config.customize_color \
                                                         else self.cfg.motion.visualize_config.marker_joint_colors[pos_id % len(self.cfg.motion.visualize_config.marker_joint_colors)]
@@ -1917,7 +1940,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                             # pos_joint[1] += self.ref_episodic_offset[env_id][1]
                             # pos_joint[2] += self.ref_episodic_offset[env_id][2]
                             # import ipdb; ipdb.set_trace()
-                            if pos_id == self.num_extended_pos:
+                            if pos_id == self.num_extended_bodies:
                                 pos_joint += self.ref_episodic_offset[env_id]
                         sphere_pose = gymapi.Transform(gymapi.Vec3(pos_joint[0], pos_joint[1], pos_joint[2]), r=None)
                         gymutil.draw_lines(sphere_geom_marker, self.gym, self.viewer, self.envs[env_id], sphere_pose) 
@@ -2935,7 +2958,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
             self.forward_vec = to_torch([1., 0., 0.], device=self.device).repeat((self.num_envs, 1))
             
             if self.cfg.motion.curriculum:
-                self.teleop_levels = torch.randint(0, 10+1, (self.num_envs,), device=self.device)
+                self.teleop_levels = torch.randint(0, 10+1, (self.num_envs,), device=self.device) #课程学习这个难度等级与关节数量无关
         # randomize action delay
         if self.cfg.domain_rand.randomize_ctrl_delay:
             self.action_queue = torch.zeros(self.num_envs, self.cfg.domain_rand.ctrl_delay_step_range[1]+1, self.num_actions, dtype=torch.float, device=self.device, requires_grad=False)
@@ -3357,7 +3380,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
         
         diff_global_body_pos = ref_body_pos_extend - body_pos_extend
-        diff_global_body_pos_vr = diff_global_body_pos[:, [18,23]] # left hand, right hand : 1 pelvis +23 body + 1head = 25 body
+        diff_global_body_pos_vr = diff_global_body_pos[:, [18,23]] # left hand, right hand : 1 pelvis +23 body + 1head = self.num_extended_bodies body
         far_enough = torch.norm(diff_global_body_pos_vr, dim=-1) > self.cfg.rewards.vrclose_threshold
         far_enough_any = far_enough.any(dim=-1)
         close_enough = ~far_enough_any
@@ -3394,7 +3417,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
         
         diff_global_body_pos = ref_body_pos_extend - body_pos_extend
-        diff_global_body_pos_vr = diff_global_body_pos[:, [18,23]] # left hand, right hand : 1 pelvis +23 body + 1head = 25 body
+        diff_global_body_pos_vr = diff_global_body_pos[:, [18,23]] # left hand, right hand : 1 pelvis +23 body + 1head = self.num_extended_bodies body
         far_enough = torch.norm(diff_global_body_pos_vr, dim=-1) > self.cfg.rewards.vrclose_threshold
         far_enough_any = far_enough.any(dim=-1)
         close_enough = ~far_enough_any
@@ -3465,11 +3488,11 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
     
     def _reward_lower_action_rate(self):
         # Penalize changes in actions
-        return torch.sum(torch.square(self.last_actions[:, :11] - self.actions[:, :11]), dim=1)
+        return torch.sum(torch.square(self.last_actions[:, :self.cfg.asset.num_lower_dof +1] - self.actions[:, :self.cfg.asset.num_lower_dof +1]), dim=1)
     
     def _reward_upper_action_rate(self):
         # Penalize changes in actions
-        return torch.sum(torch.square(self.last_actions[:, 11:] - self.actions[:, 11:]), dim=1)
+        return torch.sum(torch.square(self.last_actions[:, self.cfg.asset.num_lower_dof +1:] - self.actions[:, self.cfg.asset.num_lower_dof +1:]), dim=1)
         
 
     def _reward_collision(self):
@@ -3646,7 +3669,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         
     #     if self.cfg.asset.local_upper_reward:
     #         diff =  ref_body_pos_extend[:, [0]] - body_pos[:, [0]]
-    #         ref_body_pos_extend[:, 11:] -= diff
+    #         ref_body_pos_extend[:, self.cfg.asset.num_lower_dof +1:] -= diff
         
     #     extend_curr_pos = torch_utils.my_quat_rotate(body_rot[:, self.extend_body_ids].reshape(-1, 4), self.extend_body_pos[:, ].reshape(-1, 3)).view(self.num_envs, -1, 3) + body_pos[:, self.extend_body_ids]
     #     body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
@@ -3689,14 +3712,14 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         
         if self.cfg.asset.local_upper_reward:
             diff =  ref_body_pos_extend[:, [0]] - body_pos[:, [0]]
-            ref_body_pos_extend[:, 11:] -= diff
+            ref_body_pos_extend[:, self.cfg.asset.num_lower_dof +1:] -= diff
         
         extend_curr_pos = torch_utils.my_quat_rotate(body_rot[:, self.extend_body_parent_ids].reshape(-1, 4), self.extend_body_pos[:, ].reshape(-1, 3)).view(self.num_envs, -1, 3) + body_pos[:, self.extend_body_parent_ids]
         body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
         
         diff_global_body_pos = ref_body_pos_extend - body_pos_extend
-        diff_global_body_pos_lower = diff_global_body_pos[:, :11]
-        diff_global_body_pos_upper = diff_global_body_pos[:, 11:]
+        diff_global_body_pos_lower = diff_global_body_pos[:, :self.cfg.asset.num_lower_dof +1]
+        diff_global_body_pos_upper = diff_global_body_pos[:, self.cfg.asset.num_lower_dof +1:]
         diff_body_pos_dist_lower = (diff_global_body_pos_lower**2).mean(dim=-1).mean(dim=-1)
         diff_body_pos_dist_upper = (diff_global_body_pos_upper**2).mean(dim=-1).mean(dim=-1)
         
@@ -3723,13 +3746,13 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         
         if self.cfg.asset.local_upper_reward:
             diff =  ref_body_pos_extend[:, [0]] - body_pos[:, [0]]
-            ref_body_pos_extend[:, 11:] -= diff
+            ref_body_pos_extend[:, self.cfg.asset.num_lower_dof +1:] -= diff
         
         extend_curr_pos = torch_utils.my_quat_rotate(body_rot[:, self.extend_body_parent_ids].reshape(-1, 4), self.extend_body_pos[:, ].reshape(-1, 3)).view(self.num_envs, -1, 3) + body_pos[:, self.extend_body_parent_ids]
         body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
         
         diff_global_body_pos = ref_body_pos_extend - body_pos_extend
-        diff_global_body_pos_lower = diff_global_body_pos[:, :11]
+        diff_global_body_pos_lower = diff_global_body_pos[:, :self.cfg.asset.num_lower_dof +1]
         diff_body_pos_dist_lower = (diff_global_body_pos_lower**2).mean(dim=-1).mean(dim=-1)
         
         diff_body_pos_dist_lower = diff_body_pos_dist_lower
@@ -3752,13 +3775,13 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         
         if self.cfg.asset.local_upper_reward:
             diff =  ref_body_pos_extend[:, [0]] - body_pos[:, [0]]
-            ref_body_pos_extend[:, 11:] -= diff
+            ref_body_pos_extend[:, self.cfg.asset.num_lower_dof +1:] -= diff
         
         extend_curr_pos = torch_utils.my_quat_rotate(body_rot[:, self.extend_body_parent_ids].reshape(-1, 4), self.extend_body_pos[:, ].reshape(-1, 3)).view(self.num_envs, -1, 3) + body_pos[:, self.extend_body_parent_ids]
         body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
         
         diff_global_body_pos = ref_body_pos_extend - body_pos_extend
-        diff_global_body_pos_upper = diff_global_body_pos[:, 11:]
+        diff_global_body_pos_upper = diff_global_body_pos[:, self.cfg.asset.num_lower_dof +1:]
         diff_body_pos_dist_upper = (diff_global_body_pos_upper**2).mean(dim=-1).mean(dim=-1)
         
         diff_body_pos_dist_upper = diff_body_pos_dist_upper
@@ -3781,13 +3804,13 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         
         if self.cfg.asset.local_upper_reward:
             diff =  ref_body_pos_extend[:, [0]] - body_pos[:, [0]]
-            ref_body_pos_extend[:, 11:] -= diff
+            ref_body_pos_extend[:, self.cfg.asset.num_lower_dof +1:] -= diff
         
         extend_curr_pos = torch_utils.my_quat_rotate(body_rot[:, self.extend_body_parent_ids].reshape(-1, 4), self.extend_body_pos[:, ].reshape(-1, 3)).view(self.num_envs, -1, 3) + body_pos[:, self.extend_body_parent_ids]
         body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
         
         diff_global_body_pos = ref_body_pos_extend - body_pos_extend
-        diff_global_body_pos_upper = diff_global_body_pos[:, 11:]
+        diff_global_body_pos_upper = diff_global_body_pos[:, self.cfg.asset.num_lower_dof +1:]
         diff_body_pos_dist_upper = (diff_global_body_pos_upper**2).mean(dim=-1).mean(dim=-1)
         
         diff_body_pos_dist_upper = diff_body_pos_dist_upper
@@ -3872,7 +3895,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
 
         diff_global_body_rot = torch_utils.quat_mul(ref_body_rot, torch_utils.quat_conjugate(body_rot))
         diff_global_body_angle = torch_utils.quat_to_angle_axis(diff_global_body_rot)[0]
-        diff_global_body_angle = diff_global_body_angle[:, :11] # lower
+        diff_global_body_angle = diff_global_body_angle[:, :self.cfg.asset.num_lower_dof +1] # lower
         diff_global_body_angle_dist = (diff_global_body_angle**2).mean(dim=-1)
         r_body_rot = torch.exp(-diff_global_body_angle_dist / self.cfg.rewards.teleop_body_rot_sigma)
         return r_body_rot
@@ -3888,7 +3911,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         ref_body_rot = motion_res['rb_rot']
         diff_global_body_rot = torch_utils.quat_mul(ref_body_rot, torch_utils.quat_conjugate(body_rot))
         diff_global_body_angle = torch_utils.quat_to_angle_axis(diff_global_body_rot)[0]
-        diff_global_body_angle = diff_global_body_angle[:, 11:] # upper
+        diff_global_body_angle = diff_global_body_angle[:, self.cfg.asset.num_lower_dof +1:] # upper
         diff_global_body_angle_dist = (diff_global_body_angle**2).mean(dim=-1)
         r_body_rot = torch.exp(-diff_global_body_angle_dist / self.cfg.rewards.teleop_body_rot_sigma)
         return r_body_rot
@@ -3931,7 +3954,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         ref_body_vel = motion_res['body_vel']
 
         diff_global_vel = ref_body_vel - body_vel
-        diff_global_vel = diff_global_vel[:, :11]
+        diff_global_vel = diff_global_vel[:, :self.cfg.asset.num_lower_dof +1]
         diff_global_vel_dist = (diff_global_vel**2).mean(dim=-1).mean(dim=-1)
         
         r_vel = torch.exp(-diff_global_vel_dist / self.cfg.rewards.teleop_body_vel_sigma)
@@ -3948,7 +3971,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         ref_body_vel = motion_res['body_vel']
 
         diff_global_vel = ref_body_vel - body_vel
-        diff_global_vel = diff_global_vel[:, 11:]
+        diff_global_vel = diff_global_vel[:, self.cfg.asset.num_lower_dof +1:]
         diff_global_vel_dist = (diff_global_vel**2).mean(dim=-1).mean(dim=-1)
         
         r_vel = torch.exp(-diff_global_vel_dist / self.cfg.rewards.teleop_body_vel_sigma)
@@ -3993,7 +4016,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         ref_body_ang_vel = motion_res['body_ang_vel']
 
         diff_global_ang_vel = ref_body_ang_vel - body_ang_vel
-        diff_global_ang_vel = diff_global_ang_vel[:, :11] # lower
+        diff_global_ang_vel = diff_global_ang_vel[:, :self.cfg.asset.num_lower_dof +1] # lower
         diff_global_ang_vel_dist = (diff_global_ang_vel**2).mean(dim=-1).mean(dim=-1)
         r_ang_vel = torch.exp(-diff_global_ang_vel_dist / self.cfg.rewards.teleop_body_ang_vel_sigma)
         return r_ang_vel
@@ -4011,7 +4034,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
 
 
         diff_global_ang_vel = ref_body_ang_vel - body_ang_vel
-        diff_global_ang_vel = diff_global_ang_vel[:, 11:] # upper
+        diff_global_ang_vel = diff_global_ang_vel[:, self.cfg.asset.num_lower_dof +1:] # upper
         diff_global_ang_vel_dist = (diff_global_ang_vel**2).mean(dim=-1).mean(dim=-1)
         r_ang_vel = torch.exp(-diff_global_ang_vel_dist / self.cfg.rewards.teleop_body_ang_vel_sigma)
         return r_ang_vel
@@ -4108,7 +4131,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
     
     def _reward_freeze_arms(self):
         ## hardcode zc, soft on torso
-        return torch.sum(torch.square(self.dof_pos[:, 11:]-self.default_dof_pos[:, 11:]), dim=1) + 0.1*torch.abs(self.dof_pos[:, 10] - self.default_dof_pos[:, 10])
+        return torch.sum(torch.square(self.dof_pos[:, self.cfg.asset.num_lower_dof +1:]-self.default_dof_pos[:, self.cfg.asset.num_lower_dof +1:]), dim=1) + 0.1*torch.abs(self.dof_pos[:, 10] - self.default_dof_pos[:, 10])
     
     def render(self, sync_frame_time=False):
         # if self.viewer:
@@ -4389,7 +4412,7 @@ def compute_humanoid_observations(body_pos, body_rot, root_vel, root_ang_vel, do
     return obs
 
 # @torch.jit.script
-def compute_humanoid_observations_max_full(body_pos, body_rot, body_vel, body_ang_vel,  local_root_obs, root_height_obs):
+def compute_humanoid_observations_max_full(body_pos, body_rot, body_vel, body_ang_vel,  local_root_obs, root_height_obs): # True False
     # type: (Tensor, Tensor, Tensor, Tensor, bool,  bool) -> Tensor
     root_pos = body_pos[:, 0, :]
     root_rot = body_rot[:, 0, :]
