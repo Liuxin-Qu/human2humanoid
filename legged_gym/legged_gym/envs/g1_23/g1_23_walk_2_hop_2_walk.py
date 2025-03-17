@@ -360,10 +360,10 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         self.base_lin_vel[:] = quat_rotate_inverse(self.base_quat, self.root_states[:, 7:10])
 
 
-        print("self._rigid_body_pos shape:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_pos.shape)
-        print("self._rigid_body_pos :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_pos)
-        print("self._rigid_body_rot shape:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_rot.shape)
-        print("self._rigid_body_rot :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_rot)
+        # print("self._rigid_body_pos shape:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_pos.shape)
+        # print("self._rigid_body_pos :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_pos)
+        # print("self._rigid_body_rot shape:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_rot.shape)
+        # print("self._rigid_body_rot :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::",self._rigid_body_rot)
         self.base_ang_vel[:] = quat_rotate_inverse(self._rigid_body_rot[:, self.cfg.asset.num_lower_dof +1, :], self._rigid_body_ang_vel[:, self.cfg.asset.num_lower_dof +1, :])
         
 
@@ -1542,14 +1542,14 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                 ref_body_vel_subset = ref_body_vel_extend[:, self._track_bodies_extend_id]
                 ref_body_ang_vel_subset = ref_body_ang_vel_extend[:, self._track_bodies_extend_id]
                 
-                print("self.extend_body_parent_ids shape:",self.extend_body_parent_ids)
-                print("self.extend_body_parent_ids :",self.extend_body_parent_ids)
-                print("self.extend_body_pos shape:",self.extend_body_pos.shape)
-                print("self.extend_body_parent_ids :",self.extend_body_parent_ids)
+                # print("self.extend_body_parent_ids shape:",self.extend_body_parent_ids)
+                # print("self.extend_body_parent_ids :",self.extend_body_parent_ids)
+                # print("self.extend_body_pos shape:",self.extend_body_pos.shape)
+                # print("self.extend_body_parent_ids :",self.extend_body_parent_ids)
 
-                print("body_pos shape:",body_pos.shape)
-                print("extend_curr_pos shape:",extend_curr_pos.shape)
-                print("body_pos_extend shape:",body_pos_extend.shape)
+                # print("body_pos shape:",body_pos.shape)
+                # print("extend_curr_pos shape:",extend_curr_pos.shape)
+                # print("body_pos_extend shape:",body_pos_extend.shape)
                 # robot
                 dof_pos = self.dof_pos
                 dof_vel = self.dof_vel
@@ -1626,19 +1626,19 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                 obs = torch.cat([ self_obs, 
                                             task_obs,  # 
                                             self.actions], dim = -1) #  357 + 576 +23 = 956
-                print("self_obs shape :", self_obs.shape)
+                # print("self_obs shape :", self_obs.shape)
                 
-                print("root_pos shape :", root_pos.shape)
-                print("root_rot shape :", root_rot.shape)
-                print("body_pos_subset shape :", body_pos_subset.shape)
-                print("body_vel_subset shape :", body_vel_subset.shape)
-                print("body_ang_vel_subset shape :", body_ang_vel_subset.shape)
-                print("ref_rb_pos_subset shape :", ref_rb_pos_subset.shape)
-                print("ref_rb_rot_subset shape :", ref_rb_rot_subset.shape)
-                print("ref_body_vel_subset shape :", ref_body_vel_subset.shape)
-                print("ref_body_ang_vel_subset shape :", ref_body_ang_vel_subset.shape)
-                print("task_obs shape :", task_obs.shape)
-                print("obs shape :", obs.shape)
+                # print("root_pos shape :", root_pos.shape)
+                # print("root_rot shape :", root_rot.shape)
+                # print("body_pos_subset shape :", body_pos_subset.shape)
+                # print("body_vel_subset shape :", body_vel_subset.shape)
+                # print("body_ang_vel_subset shape :", body_ang_vel_subset.shape)
+                # print("ref_rb_pos_subset shape :", ref_rb_pos_subset.shape)
+                # print("ref_rb_rot_subset shape :", ref_rb_rot_subset.shape)
+                # print("ref_body_vel_subset shape :", ref_body_vel_subset.shape)
+                # print("ref_body_ang_vel_subset shape :", ref_body_ang_vel_subset.shape)
+                # print("task_obs shape :", task_obs.shape)
+                # print("obs shape :", obs.shape)
                 
             elif self.cfg.motion.teleop_obs_version == 'v-teleop-extend-max-nolinvel':
                 body_pos = self._rigid_body_pos
@@ -3274,13 +3274,18 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
             self.measured_heights = self._get_heights(position=motion_res['root_pos'][:, :3]).flatten()
             delta_height = self.measured_heights[:] - offset[:, 2]
             # self.root_states[:, 2] += delta_height
+            motion_z_offset = -0.07
+            delta_height += motion_z_offset
             motion_res['root_pos'][:, 2] += delta_height
             # import ipdb; ipdb.set_trace()
             if "rg_pos" in motion_res:
                 motion_res['rg_pos'][:, :, 2] += delta_height.unsqueeze(1)
             if "rg_pos_t" in motion_res:
                 motion_res['rg_pos_t'][:, :, 2] += delta_height.unsqueeze(1)
-
+                
+            # print("delta_height ",delta_height)
+            # print("motion_res['root_pos']",motion_res['root_pos'])
+            # print("motion_z_offset",motion_z_offset)
         self.ref_motion_cache.update(motion_res)
         return self.ref_motion_cache
 
@@ -3709,6 +3714,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         # motion_res = self._get_state_from_motionlib_cache(self.motion_ids, motion_times, offset=offset)
         motion_res = self._get_state_from_motionlib_cache_trimesh(self.motion_ids, motion_times, offset= offset)
         ref_body_pos_extend = motion_res['rg_pos_t']
+        # print("motion_res['rg_pos_t'] = ",motion_res['rg_pos'])
         
         if self.cfg.asset.local_upper_reward:
             diff =  ref_body_pos_extend[:, [0]] - body_pos[:, [0]]
@@ -3716,7 +3722,8 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         
         extend_curr_pos = torch_utils.my_quat_rotate(body_rot[:, self.extend_body_parent_ids].reshape(-1, 4), self.extend_body_pos[:, ].reshape(-1, 3)).view(self.num_envs, -1, 3) + body_pos[:, self.extend_body_parent_ids]
         body_pos_extend = torch.cat([body_pos, extend_curr_pos], dim=1)
-        
+        # print("ref_body_pos_extend = ",ref_body_pos_extend)
+        # print("body_pos_extend = ",body_pos_extend)
         diff_global_body_pos = ref_body_pos_extend - body_pos_extend
         diff_global_body_pos_lower = diff_global_body_pos[:, :self.cfg.asset.num_lower_dof +1]
         diff_global_body_pos_upper = diff_global_body_pos[:, self.cfg.asset.num_lower_dof +1:]

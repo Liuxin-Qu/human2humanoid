@@ -294,7 +294,7 @@ class G1_23_Walk_2_Hop_2_Walk_Cfg( LeggedRobotCfg ):
             orientation = -0.0
             teleop_selected_joint_position = 32 # 5.0
             teleop_selected_joint_vel = 16 # 5.
-            # base_height =1.0
+            base_height =1.0
             teleop_body_position = 0.0 # 6 keypoint
             teleop_body_position_extend = 40.0 # 8 keypoint
             teleop_body_position_extend_small_sigma = 0.0 # 8 keypoint
@@ -304,7 +304,7 @@ class G1_23_Walk_2_Hop_2_Walk_Cfg( LeggedRobotCfg ):
             
             # slippage = -1.
 
-        
+        base_height_target =0.8
         only_positive_rewards = False # if true negative total rewards are clipped at zero (avoids early termination problems)
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
         soft_dof_pos_limit = 0.85 # percentage of urdf limits, values above this limit are penalized

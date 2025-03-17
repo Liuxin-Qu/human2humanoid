@@ -26,10 +26,10 @@ armature : 0.
 thickness : 0.01
 
 terminate_by_knee_distance : False
-terminate_by_lin_vel : False
+terminate_by_lin_vel : True
 terminate_by_ang_vel : False
 terminate_by_gravity : False
-terminate_by_low_height : False
+terminate_by_low_height : True
 
 terminate_by_ref_motion_distance : False
 terminate_by_1time_motion : False

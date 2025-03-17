@@ -21,7 +21,7 @@ scales:
   orientation : -200.0
   feet_height : -0
   feet_max_height_for_this_air : -2500
-  # base_height : 1
+  base_height : 10
 
 
   # torques : 0
@@ -81,7 +81,7 @@ scales:
   teleop_body_position_extend :  30 # wholebody
   teleop_body_position_extend_small_sigma : 0.0 # wholebody
   teleop_body_position_extend_upper: 0
-  teleop_body_position_vr_3keypoints : 50 # 8 keypoint
+  teleop_body_position_vr_3keypoints : 0 # 8 keypoint
   teleop_body_rotation : 20.0
   teleop_body_vel : 8.0
   teleop_body_ang_vel : 8.0

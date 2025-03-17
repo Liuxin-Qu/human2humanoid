@@ -196,7 +196,7 @@ def play(cfg_hydra: DictConfig) -> None:
             keypoints_pos[:, 1] += init_root_offset[1].item()
             # import ipdb; ipdb.set_trace()
             keypoints_vel = avpposeinfo.avp_vel.copy()
-            print(keypoints_pos)
+            # print(keypoints_pos)
             env._update_realtime_vr_keypoints(keypoints_pos, keypoints_vel)
         # print("obs = ", obs)
         # print("actions = ", actions)
@@ -227,10 +227,10 @@ def play(cfg_hydra: DictConfig) -> None:
                     'contact_forces_z': env.contact_forces[robot_index, env.feet_indices, 2].cpu().numpy()
                 }
             )
-            print("logging_states")
+            # print("logging_states")
         elif i==stop_state_log:
             logger.plot_states()
-            print("plot_states")
+            # print("plot_states")
         if  0 < i < stop_rew_log:
             if infos["episode"]:
                 num_episodes = torch.sum(env.reset_buf).item()

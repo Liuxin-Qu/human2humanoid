@@ -215,7 +215,7 @@ sphere_params = gymapi.AssetOptions()
 
 sphere_asset = gym.create_sphere(sim, radius, sphere_params)
 
-num_spheres = 19
+# num_spheres = 19
 init_positions = gymapi.Vec3(0.0, 0.0, 0.0)
 spacing = 0.
 
@@ -228,14 +228,8 @@ while not gym.query_viewer_has_closed(viewer):
 
     motion_len = motion_lib.get_motion_length(motion_id).item()
     motion_time = time_step % motion_len
-    # motion_time = 0
-    # import pdb; pdb.set_trace()
-    # print(motion_id, motion_time)
     motion_res = motion_lib.get_motion_state(torch.tensor([motion_id]).to(args.compute_device_id), torch.tensor([motion_time]).to(args.compute_device_id))
-    # print("motion_res.keys(): ", motion_res.keys())
-    # print("motion_res['dof_pos'].shape: ", motion_res['dof_pos'].shape)
-    # print("motion_res",motion_res['dof_pos'])
-    
+
     root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, smpl_params, limb_weights, pose_aa, rb_pos, rb_rot, body_vel, body_ang_vel = \
                 motion_res["root_pos"], motion_res["root_rot"], motion_res["dof_pos"], motion_res["root_vel"], motion_res["root_ang_vel"], motion_res["dof_vel"], \
                 motion_res["motion_bodies"], motion_res["motion_limb_weights"], motion_res["motion_aa"], motion_res["rg_pos"], motion_res["rb_rot"], motion_res["body_vel"], motion_res["body_ang_vel"]
@@ -246,82 +240,27 @@ while not gym.query_viewer_has_closed(viewer):
     gym.refresh_rigid_body_state_tensor(sim)
     # import pdb; pdb.set_trace()
     idx = 0
+    z_offset = -0.07
     for pos_joint in rb_pos[0, 1:]: # idx 0 torso (duplicate with 11)
         sphere_geom2 = gymutil.WireframeSphereGeometry(0.1, 4, 4, None, color=(1, 0.0, 0.0))
-        sphere_pose = gymapi.Transform(gymapi.Vec3(pos_joint[0], pos_joint[1], pos_joint[2]), r=None)
+        sphere_pose = gymapi.Transform(gymapi.Vec3(pos_joint[0], pos_joint[1], pos_joint[2]+z_offset), r=None)
         gymutil.draw_lines(sphere_geom2, gym, viewer, envs[0], sphere_pose) 
-    # import pdb; pdb.set_trace()
-        
-    # out = motion_lib.mesh_parsers.forward_kinematics_batch(pose_aa, root_rot, root_pos)
-    # import pdb; pdb.set_trace()
-    #################### Heading invarance check: ####################
-    # from phc.env.tasks.humanoid_im import compute_imitation_observations
-    # from phc.env.tasks.humanoid import compute_humanoid_observations_smpl_max
-    # from phc.env.tasks.humanoid_amp import build_amp_observations_smpl
-
-    # motion_res_10 = motion_lib.get_motion_state(torch.tensor([motion_id]).to(args.compute_device_id), torch.tensor([0]).to(args.compute_device_id))
-    # motion_res_100 = motion_lib.get_motion_state(torch.tensor([motion_id]).to(args.compute_device_id), torch.tensor([3]).to(args.compute_device_id))
-
-    # root_pos_10, root_rot_10, dof_pos_10, root_vel_10, root_ang_vel_10, dof_vel_10, key_pos_10, smpl_params_10, limb_weights_10, pose_aa_10, rb_pos_10, rb_rot_10, body_vel_10, body_ang_vel_10 = \
-    #             motion_res_10["root_pos"], motion_res_10["root_rot"], motion_res_10["dof_pos"], motion_res_10["root_vel"], motion_res_10["root_ang_vel"], motion_res_10["dof_vel"], \
-    #             motion_res_10["key_pos"], motion_res_10["motion_bodies"], motion_res_10["motion_limb_weights"], motion_res_10["motion_aa"], motion_res_10["rg_pos"], motion_res_10["rb_rot"], motion_res_10["body_vel"], motion_res_10["body_ang_vel"]
-
-    # root_pos_100, root_rot_100, dof_pos_100, root_vel_100, root_ang_vel_100, dof_vel_100, key_pos_100, smpl_params_100, limb_weights_100, pose_aa_100, rb_pos_100, rb_rot_100, body_vel_100, body_ang_vel_100 = \
-    #             motion_res_100["root_pos"], motion_res_100["root_rot"], motion_res_100["dof_pos"], motion_res_100["root_vel"], motion_res_100["root_ang_vel"], motion_res_100["dof_vel"], \
-    #             motion_res_100["key_pos"], motion_res_100["motion_bodies"], motion_res_100["motion_limb_weights"], motion_res_100["motion_aa"], motion_res_100["rg_pos"], motion_res_100["rb_rot"], motion_res_100["body_vel"], motion_res_100["body_ang_vel"]
-
-    # # obs = compute_imitation_observations(root_pos_100, root_rot_100, rb_pos_100, rb_rot_100, body_vel_100, body_ang_vel_100, rb_pos_10, rb_rot_10, body_vel_10, body_ang_vel_10, 1, True)
-    # # obs_im = compute_humanoid_observations_smpl_max(rb_pos_100, rb_rot_100, body_vel_100, body_ang_vel_100, smpl_params_100, limb_weights_100, True, False, True, True, True)
-    # obs_amp = build_amp_observations_smpl(
-    #     root_pos_100, root_rot_100, body_vel_100[:, 0, :],
-    #     body_ang_vel_100[:, 0, :], dof_pos_100, dof_vel_100, rb_pos_100,
-    #     smpl_params_100, limb_weights_100, None, True, False, False, True, True, True)
-
-    # motion_lib.load_motions(skeleton_trees = [sk_tree] * num_motions, gender_betas = [torch.zeros(vis_joint_nums)] * num_motions, limb_weights = [np.zeros(10)] * num_motions, random_sample=False)
-    # # joblib.dump(obs_amp, "a.pkl")
-    # import ipdb
-    # ipdb.set_trace()
-
-    #################### Heading invarance check: ####################
-
-    ###########################################################################
-    # root_pos[:, 1] *= -1
-    # key_pos[:, 1] *= -1  # Will need to flip these as well
-    # root_rot[:, 0] *= -1
-    # root_rot[:, 2] *= -1
-
-    # dof_vel = dof_vel.reshape(len(left_to_right_index), 3)[left_to_right_index]
-    # dof_vel[:, 0] = dof_vel[:, 0] * -1
-    # dof_vel[:, 2] = dof_vel[:, 2] * -1
-    # dof_vel = dof_vel.reshape(1, len(left_to_right_index) * 3)
-
-    # dof_pos = dof_pos.reshape(len(left_to_right_index), 3)[left_to_right_index]
-    # dof_pos[:, 0] = dof_pos[:, 0] * -1
-    # dof_pos[:, 2] = dof_pos[:, 2] * -1
-    # dof_pos = dof_pos.reshape(1, len(left_to_right_index) * 3)
-    ###########################################################################
+    
+    print("root_pos",root_pos)
+    root_pos[0][2] +=z_offset
+    
     root_states = torch.cat([root_pos, root_rot, root_vel, root_ang_vel], dim=-1).repeat(num_envs, 1)
-    # gym.set_actor_root_state_tensor(sim, gymtorch.unwrap_tensor(root_states))
+
     gym.set_actor_root_state_tensor_indexed(sim, gymtorch.unwrap_tensor(root_states), gymtorch.unwrap_tensor(env_ids), len(env_ids))
 
     gym.refresh_actor_root_state_tensor(sim)
 
-    # dof_pos = dof_pos.cpu().numpy()
-    # dof_states['pos'] = dof_pos
-    # speed = speeds[current_dof]
     dof_state = torch.stack([dof_pos, torch.zeros_like(dof_pos)], dim=-1).squeeze().repeat(num_envs, 1)
     gym.set_dof_state_tensor_indexed(sim, gymtorch.unwrap_tensor(dof_state), gymtorch.unwrap_tensor(env_ids), len(env_ids))
 
     gym.simulate(sim)
     gym.refresh_rigid_body_state_tensor(sim)
     gym.fetch_results(sim, True)
-    
-
-    # print((rigidbody_state[None, ] - rigidbody_state[:, None]).sum().abs())
-    # print((actor_root_state[None, ] - actor_root_state[:, None]).sum().abs())
-
-    # pose_quat = motion_lib._motion_data['0-ACCAD_Female1Running_c3d_C5 - walk to run_poses']['pose_quat_global']
-    # diff = quat_mul(quat_inverse(rb_rot[0, :]), rigidbody_state[0, :, 3:7]); np.set_printoptions(precision=4, suppress=1); print(diff.cpu().numpy()); print(torch_utils.quat_to_angle_axis(diff)[0])
 
     # update the viewer
     gym.step_graphics(sim)
@@ -330,7 +269,6 @@ while not gym.query_viewer_has_closed(viewer):
     # Wait for dt to elapse in real time.
     # This synchronizes the physics simulation with the rendering rate.
     gym.sync_frame_time(sim)
-    # time_step += 1/5
     time_step += dt
 
     for evt in gym.query_viewer_action_events(viewer):

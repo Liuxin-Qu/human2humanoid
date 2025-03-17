@@ -107,7 +107,12 @@ Please read through the whole README.md before cloning the repo.
    # rewards.penalty_scale=0.5 \
    # headless=True 
 
-   HYDRA_FULL_ERROR=1  python legged_gym/scripts/train_hydra.py  --config-name=config_g1_23 num_envs=1
+   HYDRA_FULL_ERROR=1  \
+   python legged_gym/scripts/train_hydra.py  \
+   --config-name=config_g1_23 \
+   base_height=0 \
+   num_envs=1 \
+   max_iterations=1  
 
 
    # 观测维度根据extend_head=True | False 改变  True
@@ -125,9 +130,9 @@ Please read through the whole README.md before cloning the repo.
    --config-name=config_g1_23 \
    task=g1_23:walk_2_hop_2_walk \
    sim_device=cuda:0 \
-   load_run=25_03_11_17-45-59_OmniH2O_TEACHER_G1_23_0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses \
-   checkpoint=10000 \
-   num_envs=10 \
+   load_run=25_03_16_21-04-00_add_base_height_track \
+   checkpoint=500 \
+   num_envs=1 \
    headless=False
    ```
 2. Try training and playing **sim2real deploy policy**.
