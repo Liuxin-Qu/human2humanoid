@@ -21,10 +21,10 @@ default_joint_angles :  # : target angles [rad] when action : 0.0
     left_shoulder_pitch_joint: 0.
     left_shoulder_roll_joint: 0.
     left_shoulder_yaw_joint: 0.
-    left_elbow_joint: 0.
+    left_elbow_joint: 1.
     left_wrist_roll_joint: 0. 
     right_shoulder_pitch_joint: 0.
     right_shoulder_roll_joint: 0.
     right_shoulder_yaw_joint: 0.
-    right_elbow_joint: 0.
+    right_elbow_joint: 1.
     right_wrist_roll_joint: 0. 

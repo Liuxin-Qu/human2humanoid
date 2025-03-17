@@ -110,9 +110,15 @@ Please read through the whole README.md before cloning the repo.
    HYDRA_FULL_ERROR=1  \
    python legged_gym/scripts/train_hydra.py  \
    --config-name=config_g1_23 \
-   base_height=0 \
-   num_envs=1 \
-   max_iterations=1  
+   env.num_observations=956 \
+   env.num_privileged_obs=1045 \
+   motion.extend_head=False \
+   run_name=extend_head_False \
+   sim_device=cuda:0 \
+   num_envs=4096 \
+   headless=False \
+   
+   max_iterations=10000  
 
 
    # 观测维度根据extend_head=True | False 改变  True
@@ -130,8 +136,8 @@ Please read through the whole README.md before cloning the repo.
    --config-name=config_g1_23 \
    task=g1_23:walk_2_hop_2_walk \
    sim_device=cuda:0 \
-   load_run=25_03_16_21-04-00_add_base_height_track \
-   checkpoint=500 \
+   load_run=25_03_17_01-22-07_debug_OmniH2O_TEACHER_G1_23_0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses \
+   checkpoint=3000 \
    num_envs=1 \
    headless=False
    ```

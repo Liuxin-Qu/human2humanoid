@@ -32,7 +32,7 @@ train: True
 im_dump: False
 task: "g1_23:walk_2_hop_2_walk"
 load_run: ""
-num_envs:  8192
+num_envs:  4096
 checkpoint: 0
 
 joystick: False
