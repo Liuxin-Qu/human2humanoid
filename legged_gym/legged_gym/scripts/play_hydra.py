@@ -83,7 +83,7 @@ def play(cfg_hydra: DictConfig) -> None:
     # env_cfg.terrain.num_rows = 5
     # env_cfg.terrain.num_cols = 5
     env_cfg.terrain.curriculum = False
-    env_cfg.terrain.mesh_type = 'trimesh'
+    env_cfg.terrain.mesh_type = 'plane'
     # env_cfg.terrain.mesh_type = 'plane'
     # if env_cfg.terrain.mesh_type == 'trimesh':
     #     env_cfg.terrain.terrain_types = ['flat', 'rough', 'low_obst']  # do not duplicate!

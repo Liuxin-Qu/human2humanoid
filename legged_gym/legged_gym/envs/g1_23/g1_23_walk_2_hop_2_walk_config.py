@@ -349,6 +349,7 @@ class G1_23_Walk_2_Hop_2_Walk_Cfg( LeggedRobotCfg ):
                 'right_knee_joint': 0.5,
                 'right_ankle_joint': 0.5,
         }
+        teleop_body_pos_extend_selection={}
               
             
     class normalization:
@@ -428,6 +429,8 @@ class G1_23_Walk_2_Hop_2_Walk_Cfg( LeggedRobotCfg ):
         resample_motions_for_envs_interval_s = 1000
         extend_head = True
         extend_hand = False
+        extend_head_names = ['head']
+        extend_hand_names = ['left_hand','right_hand']
         
 class G1_23_Walk_2_Hop_2_Walk_CfgPPO( LeggedRobotCfgPPO ):
     class algorithm:

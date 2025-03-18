@@ -21,7 +21,7 @@ scales:
   orientation : -200.0
   feet_height : -0
   feet_max_height_for_this_air : -2500
-  base_height : 10
+  base_height : 1000
 
 
   # torques : 0
@@ -75,16 +75,16 @@ scales:
   # teleop_body_ang_vel_upper: 8 
 
   # ============================= 0406 version rewards (all whole body rewards)
-  teleop_selected_joint_position : 32 # 5.0
+  teleop_selected_joint_position : 320 # 5.0
   teleop_selected_joint_vel : 16 # 5.
-  teleop_body_position : 0.0 # 6 keypoint
-  teleop_body_position_extend :  30 # wholebody
-  teleop_body_position_extend_small_sigma : 0.0 # wholebody
-  teleop_body_position_extend_upper: 0
-  teleop_body_position_vr_3keypoints : 0 # 8 keypoint
-  teleop_body_rotation : 20.0
-  teleop_body_vel : 8.0
-  teleop_body_ang_vel : 8.0
+  # teleop_body_position : 0.0 # 6 keypoint
+  teleop_body_position_extend :  300 # wholebody
+  # teleop_body_position_extend_small_sigma : 0.0 # wholebody
+  # teleop_body_position_extend_upper: 0
+  # teleop_body_position_vr_3keypoints : 0 # 8 keypoint
+  teleop_body_rotation : 200.0
+  teleop_body_vel : 20
+  teleop_body_ang_vel : 20
   
 
   # teleop_selected_joint_position : 32 # 5.0
@@ -108,7 +108,7 @@ soft_torque_limit : 0.85
 
 max_contact_force : 500.
 
-base_height_target : 0.8
+base_height_target : 0.7
 body_pos_sigma : 0.5
 body_rot_sigma : 1.
 body_vel_sigma : 1.
@@ -129,8 +129,7 @@ teleop_body_pos_0dot5sigma : 0.5 # 0.01
 teleop_body_pos_upperbody_sigma : 0.03 # -> 0.03
 teleop_body_pos_vr_3keypoints_sigma : 0.03 # 0.002->0.03
 
-teleop_body_pos_lowerbody_weight : 0.5
-teleop_body_pos_upperbody_weight : 1.0
+
 teleop_body_rot_sigma : 0.1
 teleop_body_vel_sigma : 10 # 10 -> 5
 teleop_body_ang_vel_sigma : 10 # 10 -> 5
@@ -142,28 +141,63 @@ teleop_body_pos_selection : ['pelvis']
 teleop_body_ang_vel_selection : ['pelvis']
 teleop_joint_pos_selection : 
   # upper body
-  waist_yaw_joint: 2.0
-  left_shoulder_pitch_joint: 2.0
-  left_shoulder_roll_joint: 2.0
-  left_shoulder_yaw_joint: 2.0
-  left_elbow_joint: 2.0
-  right_shoulder_pitch_joint: 2.0
-  right_shoulder_roll_joint: 2.0
-  right_shoulder_yaw_joint: 2.0
-  right_elbow_joint: 2.0
+  waist_yaw_joint: 1
+  left_shoulder_pitch_joint: 1
+  left_shoulder_roll_joint: 1
+  left_shoulder_yaw_joint: 1
+  left_elbow_joint: 0.5
+  right_shoulder_pitch_joint: 1
+  right_shoulder_roll_joint: 1
+  right_shoulder_yaw_joint: 1
+  right_elbow_joint: 0.5
   # lower body
-  left_hip_pitch_joint: 2.0
-  left_hip_roll_joint: 0.5
-  left_hip_yaw_joint: 0.5
-  left_knee_joint: 0.5
-  left_ankle_pitch_joint: 0.5
-  left_ankle_roll_joint: 0.5
-  right_hip_pitch_joint: 2.0
-  right_hip_roll_joint: 0.5
-  right_hip_yaw_joint: 0.5
-  right_knee_joint: 0.5
-  right_ankle_pitch_joint: 0.5
-  right_ankle_roll_joint: 0.5
+  left_hip_pitch_joint: 10
+  left_hip_roll_joint: 2
+  left_hip_yaw_joint: 2
+  left_knee_joint: 10
+  left_ankle_pitch_joint: 10
+  left_ankle_roll_joint: 2
+  right_hip_pitch_joint: 10
+  right_hip_roll_joint: 2
+  right_hip_yaw_joint: 2
+  right_knee_joint: 10
+  right_ankle_pitch_joint: 10
+  right_ankle_roll_joint: 2
+
+teleop_body_pos_lowerbody_weight : 2
+teleop_body_pos_upperbody_weight : 1.0
+teleop_body_pos_extend_selection : #如有新增body，需要在此处写上权重
+  # lower
+  pelvis: 10
+  left_hip_pitch_link: 1
+  left_hip_roll_link: 1
+  left_hip_yaw_link: 1
+  left_knee_link: 1
+  left_ankle_pitch_link: 10
+  left_ankle_roll_link: 1
+  right_hip_pitch_link: 1
+  right_hip_roll_link: 1
+  right_hip_yaw_link: 1
+  right_knee_link: 1
+  right_ankle_pitch_link: 10
+  right_ankle_roll_link: 1
+  torso_link: 10
+  # upper
+  left_shoulder_pitch_link: 1
+  left_shoulder_roll_link: 1
+  left_shoulder_yaw_link: 1
+  left_elbow_link: 1
+  left_wrist_roll_rubber_hand: 1
+  right_shoulder_pitch_link: 1
+  right_shoulder_roll_link: 1
+  right_shoulder_yaw_link: 1
+  right_elbow_link: 0.01
+  right_wrist_roll_rubber_hand: 0.01
+  # extend
+  extend_left_hand: 1
+  extend_right_hand: 1
+  extend_head: 1
+
 
 # curriculum: False
 sigma_curriculum: False

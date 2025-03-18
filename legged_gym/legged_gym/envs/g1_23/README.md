@@ -108,16 +108,18 @@ Please read through the whole README.md before cloning the repo.
    # headless=True 
 
    HYDRA_FULL_ERROR=1  \
+   CUDA_LAUNCH_BLOCKING=1 \
    python legged_gym/scripts/train_hydra.py  \
    --config-name=config_g1_23 \
    env.num_observations=956 \
    env.num_privileged_obs=1045 \
    motion.extend_head=False \
-   run_name=extend_head_False \
-   sim_device=cuda:0 \
+   run_name=extend_head_False_base_height_track_motion_move \
+   sim_device=cuda:1 \
+   rl_device=cuda:1 \
    num_envs=4096 \
+
    headless=False \
-   
    max_iterations=10000  
 
 
@@ -135,9 +137,9 @@ Please read through the whole README.md before cloning the repo.
    python  legged_gym/scripts/play_hydra.py \
    --config-name=config_g1_23 \
    task=g1_23:walk_2_hop_2_walk \
-   sim_device=cuda:0 \
-   load_run=25_03_17_01-22-07_debug_OmniH2O_TEACHER_G1_23_0_ACCAD_Male1Walking_c3d_Walk_B17_Walk_2_hop_2_walk_poses \
-   checkpoint=3000 \
+   sim_device=cuda:1 \
+   load_run=25_03_18_19-02-06_extend_head_False_base_height_track_motion_first_frame \
+   checkpoint=4000 \
    num_envs=1 \
    headless=False
    ```

@@ -113,7 +113,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
             # assert  self.cfg.motion.extend_head, "在这个代码中, extend_head必须设置为True,  待改进"
             if not self.cfg.motion.extend_hand and not self.cfg.motion.extend_head:
                 self.extend_body_pos = torch.empty((self.num_envs, 0, 3), dtype=torch.float32).to(self.device)
-                
+            self.extend_body_names =self.body_names
             if self.cfg.motion.extend_hand:
                 # self.extend_body_parent_ids = [15, 23]
                 self.extend_body_parent_ids = []
@@ -124,12 +124,28 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
                 self._track_bodies_extend_id = self._track_bodies_id 
                 # self.extend_body_pos = torch.tensor([[0.3, 0, 0], [0.3, 0, 0]]).repeat(self.num_envs, 1, 1).to(self.device)
                 self.extend_body_pos = torch.empty((self.num_envs, 0, 3), dtype=torch.float32).to(self.device)  # 空的 (N, 0, 3) 张量
+                self.extend_body_names += self.cfg.motion.extend_hand_names
+            else:
+                for extend_hand in self.cfg.motion.extend_hand_names:
+                    if extend_hand in self.cfg.rewards.teleop_body_pos_extend_selection:
+                        del self.cfg.rewards.teleop_body_pos_extend_selection[extend_hand]
+            
             if self.cfg.motion.extend_head:
                 self.extend_body_parent_ids = [0]
                 # self._track_bodies_id += [len(self._body_list)]
                 # self._track_bodies_extend_id += [len(self._body_list) + 2]
                 self._track_bodies_extend_id += [len(self._body_list)] # extended hend is the last one 
                 self.extend_body_pos = torch.tensor([[0, 0, self.cfg.asset.head_length]]).repeat(self.num_envs, 1, 1).to(self.device)
+                self.extend_body_names += self.cfg.motion.extend_head_names
+            else:
+                for extend_head in self.cfg.motion.extend_head_names:
+                    if extend_head in self.cfg.rewards.teleop_body_pos_extend_selection:
+                        del self.cfg.rewards.teleop_body_pos_extend_selection[extend_head]
+                
+                
+            self.cfg.rewards.teleop_body_pos_extend_selection
+            
+            
             
         self.num_compute_average_epl = self.cfg.rewards.num_compute_average_epl
         self.average_episode_length = 0. # num_compute_average_epl last termination episode length
@@ -3056,18 +3072,18 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         self._init_domain_params()
 
         # save body names from the asset
-        body_names = self.gym.get_asset_rigid_body_names(robot_asset)
+        self.body_names = self.gym.get_asset_rigid_body_names(robot_asset)
         self.dof_names = self.gym.get_asset_dof_names(robot_asset)
         # import pdb; pdb.set_trace()
-        self.num_bodies = len(body_names)
+        self.num_bodies = len(self.body_names)
         self.num_dofs = len(self.dof_names)
-        feet_names = [s for s in body_names if self.cfg.asset.foot_name in s]
+        feet_names = [s for s in self.body_names if self.cfg.asset.foot_name in s]
         penalized_contact_names = []
         for name in self.cfg.asset.penalize_contacts_on:
-            penalized_contact_names.extend([s for s in body_names if name in s])
+            penalized_contact_names.extend([s for s in self.body_names if name in s])
         termination_contact_names = []
         for name in self.cfg.asset.terminate_after_contacts_on:
-            termination_contact_names.extend([s for s in body_names if name in s])
+            termination_contact_names.extend([s for s in self.body_names if name in s])
         # import ipdb; ipdb.set_trace()
         base_init_state_list = self.cfg.init_state.pos + self.cfg.init_state.rot + self.cfg.init_state.lin_vel + self.cfg.init_state.ang_vel
 
@@ -3258,6 +3274,7 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
     def _get_state_from_motionlib_cache_trimesh(self, motion_ids, motion_times, offset=None):
         ## Cache the motion + offset
         # import ipdb; ipdb.set_trace()
+        # motion_times = motion_times * 0
         if offset is None  or not "motion_ids" in self.ref_motion_cache or self.ref_motion_cache['offset'] is None or len(self.ref_motion_cache['motion_ids']) != len(motion_ids) or len(self.ref_motion_cache['offset']) != len(offset) \
             or  (self.ref_motion_cache['motion_ids'] - motion_ids).abs().sum() + (self.ref_motion_cache['motion_times'] - motion_times).abs().sum() + (self.ref_motion_cache['offset'] - offset).abs().sum() > 0 :
             self.ref_motion_cache['motion_ids'] = motion_ids.clone()  # need to clone; otherwise will be overriden
@@ -3466,7 +3483,9 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         # Penalize base height away from target
         base_height = self.root_states[:, 2]
         dif = torch.abs(base_height - self.cfg.rewards.base_height_target)
-        return torch.clip(dif - 0.15, min=0.)
+        # print("base_height",base_height)
+        # print("self.cfg.rewards.base_height_target",self.cfg.rewards.base_height_target)
+        return torch.exp(-dif * 100)
 
     def _reward_feet_height(self):
         # Penalize base height away from target
@@ -3725,18 +3744,21 @@ class G1_23_Walk_2_Hop_2_Walk(BaseTask):
         # print("ref_body_pos_extend = ",ref_body_pos_extend)
         # print("body_pos_extend = ",body_pos_extend)
         diff_global_body_pos = ref_body_pos_extend - body_pos_extend
+        # print("self.cfg.rewards.teleop_body_pos_extend_selection.items()",self.cfg.rewards.teleop_body_pos_extend_selection.items())
+        for body_name, scale in self.cfg.rewards.teleop_body_pos_extend_selection.items():
+            body_index = self.extend_body_names.index(body_name)
+            assert body_index >= 0, f"body {body_name} not found in the robot"
+            
+            diff_global_body_pos[:, body_index] *= scale **.5        
+        
         diff_global_body_pos_lower = diff_global_body_pos[:, :self.cfg.asset.num_lower_dof +1]
         diff_global_body_pos_upper = diff_global_body_pos[:, self.cfg.asset.num_lower_dof +1:]
         diff_body_pos_dist_lower = (diff_global_body_pos_lower**2).mean(dim=-1).mean(dim=-1)
         diff_body_pos_dist_upper = (diff_global_body_pos_upper**2).mean(dim=-1).mean(dim=-1)
         
-        diff_body_pos_dist_lower = diff_body_pos_dist_lower
-        diff_body_pos_dist_upper = diff_body_pos_dist_upper
         r_body_pos_lower = torch.exp(-diff_body_pos_dist_lower / self.cfg.rewards.teleop_body_pos_lowerbody_sigma)
         r_body_pos_upper = torch.exp(-diff_body_pos_dist_upper / self.cfg.rewards.teleop_body_pos_upperbody_sigma)
-        
         r_body_pos = r_body_pos_lower * self.cfg.rewards.teleop_body_pos_lowerbody_weight + r_body_pos_upper * self.cfg.rewards.teleop_body_pos_upperbody_weight
-        
         return r_body_pos
     
 
