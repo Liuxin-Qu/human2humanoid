@@ -1,3 +1,5 @@
+export LD_LIBRARY_PATH="/home/agiuser/miniconda3/envs/jiangnanstyle/lib:$LD_LIBRARY_PATH" 
+
 fork the h2o repository
 
 <h1 align="center">Human to Humanoid</h1>

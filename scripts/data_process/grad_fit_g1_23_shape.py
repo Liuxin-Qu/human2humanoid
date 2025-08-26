@@ -35,7 +35,7 @@ g1_23_joint_names = [ 'pelvis',
                   'right_shoulder_pitch_link', 'right_shoulder_roll_link', 'right_shoulder_yaw_link', 'right_elbow_link','right_wrist_roll_rubber_hand']
 
 
-g1_23_fk = Humanoid_G1_23_Batch(extend_hand = False, extend_head=False, device=device) # load forward kinematics model
+g1_23_fk = Humanoid_G1_23_Batch(extend_hand = True, extend_head=True, device=device) # load forward kinematics model
 #### Define corresonpdances between g1_23 and smpl joints
 g1_23_joint_names_augment = g1_23_joint_names + ["head_link"]
 g1_23_joint_pick = ['pelvis',  'left_hip_roll_link', "left_knee_link", "left_ankle_pitch_link",  'right_hip_roll_link', 'right_knee_link', 'right_ankle_pitch_link', "left_shoulder_pitch_link", "left_elbow_link", "left_wrist_roll_rubber_hand", "right_shoulder_pitch_link", "right_elbow_link", "right_wrist_roll_rubber_hand", "head_link"]

@@ -46,7 +46,7 @@ def load_amass_data(data_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--amass_root", type=str, default="/home/qlx/RL/human2humanoid/data/AMASS/AMASS_Complete")
+    parser.add_argument("--amass_root", type=str, default="/home/agiuser/vmp/human2humanoid/data/AMASS/AMASS_Complete")
     args = parser.parse_args()
     
     device = torch.device("cuda:0")
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     if len(key_name_to_pkls) == 0:
         raise ValueError(f"No motion files found in {amass_root}")
 
-    g1_23_fk = Humanoid_G1_23_Batch(extend_hand = False, extend_head=False, device = device)
+    g1_23_fk = Humanoid_G1_23_Batch(extend_hand = True, extend_head=True, device = device)
     data_dump = {}
     pbar = tqdm(key_name_to_pkls.keys())
     for data_key in pbar:
