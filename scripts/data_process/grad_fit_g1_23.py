@@ -22,6 +22,7 @@ from torch.autograd import Variable
 from tqdm import tqdm
 import argparse
 
+dof_num=23
 def load_amass_data(data_path):
     entry_data = dict(np.load(open(data_path, "rb"), allow_pickle=True))
 
@@ -118,66 +119,151 @@ if __name__ == "__main__":
     g1_23_fk = Humanoid_G1_23_Batch(extend_hand = True, extend_head=True, device = device)
     data_dump = {}
     pbar = tqdm(key_name_to_pkls.keys())
-    for data_key in pbar:
-        amass_data = load_amass_data(key_name_to_pkls[data_key])
-        skip = int(amass_data['fps']//30)
-        trans = torch.from_numpy(amass_data['trans'][::skip]).float().to(device)
-        N = trans.shape[0]
-        pose_aa_walk = torch.from_numpy(np.concatenate((amass_data['pose_aa'][::skip, :66], np.zeros((N, 6))), axis = -1)).float().to(device)
+    # for data_key in pbar:
+    #     amass_data = load_amass_data(key_name_to_pkls[data_key])
+    #     skip = int(amass_data['fps']//30)
+    #     trans = torch.from_numpy(amass_data['trans'][::skip]).float().to(device)
+    #     N = trans.shape[0]
+    #     pose_aa_walk = torch.from_numpy(np.concatenate((amass_data['pose_aa'][::skip, :66], np.zeros((N, 6))), axis = -1)).float().to(device)
 
 
-        verts, joints = smpl_parser_n.get_joints_verts(pose_aa_walk, torch.zeros((1, 10)).to(device), trans)
-        offset = joints[:, 0] - trans
-        root_trans_offset = trans + offset
+    #     verts, joints = smpl_parser_n.get_joints_verts(pose_aa_walk, torch.zeros((1, 10)).to(device), trans)
+    #     offset = joints[:, 0] - trans
+    #     root_trans_offset = trans + offset
 
-        pose_aa_g1_23 = np.repeat(np.repeat(sRot.identity().as_rotvec()[None, None, None, ], 24, axis = 2), N, axis = 1)
-        pose_aa_g1_23[..., 0, :] = (sRot.from_rotvec(pose_aa_walk.cpu().numpy()[:, :3]) * sRot.from_quat([0.5, 0.5, 0.5, 0.5]).inv()).as_rotvec()
-        pose_aa_g1_23 = torch.from_numpy(pose_aa_g1_23).float().to(device)
-        gt_root_rot = torch.from_numpy((sRot.from_rotvec(pose_aa_walk.cpu().numpy()[:, :3]) * sRot.from_quat([0.5, 0.5, 0.5, 0.5]).inv()).as_rotvec()).float().to(device)
+    #     pose_aa_g1_23 = np.repeat(np.repeat(sRot.identity().as_rotvec()[None, None, None, ], 24, axis = 2), N, axis = 1)
+    #     pose_aa_g1_23[..., 0, :] = (sRot.from_rotvec(pose_aa_walk.cpu().numpy()[:, :3]) * sRot.from_quat([0.5, 0.5, 0.5, 0.5]).inv()).as_rotvec()
+    #     pose_aa_g1_23 = torch.from_numpy(pose_aa_g1_23).float().to(device)
+    #     gt_root_rot = torch.from_numpy((sRot.from_rotvec(pose_aa_walk.cpu().numpy()[:, :3]) * sRot.from_quat([0.5, 0.5, 0.5, 0.5]).inv()).as_rotvec()).float().to(device)
 
-        dof_pos = torch.zeros((1, N, 23, 1)).to(device)
+    #     dof_pos = torch.zeros((1, N, 23, 1)).to(device)
 
-        dof_pos_new = Variable(dof_pos, requires_grad=True)
-        optimizer_pose = torch.optim.Adadelta([dof_pos_new],lr=100)
+    #     dof_pos_new = Variable(dof_pos, requires_grad=True)
+    #     optimizer_pose = torch.optim.Adadelta([dof_pos_new],lr=100)
 
-        for iteration in range(500):
-            verts, joints = smpl_parser_n.get_joints_verts(pose_aa_walk, shape_new, trans)
-            pose_aa_g1_23_new = torch.cat([gt_root_rot[None, :, None], g1_23_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2).to(device)
-            fk_return = g1_23_fk.fk_batch(pose_aa_g1_23_new, root_trans_offset[None, ])
+    #     for iteration in range(500):
+    #         verts, joints = smpl_parser_n.get_joints_verts(pose_aa_walk, shape_new, trans)
+    #         pose_aa_g1_23_new = torch.cat([gt_root_rot[None, :, None], g1_23_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2).to(device)
+    #         fk_return = g1_23_fk.fk_batch(pose_aa_g1_23_new, root_trans_offset[None, ])
             
-            diff = fk_return['global_translation_extend'][:, :, g1_23_joint_pick_idx] - joints[:, smpl_joint_pick_idx]
-            loss_g = diff.norm(dim = -1).mean() 
-            loss = loss_g
+    #         diff = fk_return['global_translation_extend'][:, :, g1_23_joint_pick_idx] - joints[:, smpl_joint_pick_idx]
+    #         loss_g = diff.norm(dim = -1).mean() 
+    #         loss = loss_g
             
             
-            pbar.set_description_str(f"{iteration} {loss.item() * 1000}")
+    #         pbar.set_description_str(f"{iteration} {loss.item() * 1000}")
 
-            optimizer_pose.zero_grad()
-            loss.backward()
-            optimizer_pose.step()
+    #         optimizer_pose.zero_grad()
+    #         loss.backward()
+    #         optimizer_pose.step()
             
-            dof_pos_new.data.clamp_(g1_23_fk.joints_range[:, 0, None], g1_23_fk.joints_range[:, 1, None])
+    #         dof_pos_new.data.clamp_(g1_23_fk.joints_range[:, 0, None], g1_23_fk.joints_range[:, 1, None])
             
-        dof_pos_new.data.clamp_(g1_23_fk.joints_range[:, 0, None], g1_23_fk.joints_range[:, 1, None])
-        pose_aa_g1_23_new = torch.cat([gt_root_rot[None, :, None], g1_23_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2)
-        fk_return = g1_23_fk.fk_batch(pose_aa_g1_23_new, root_trans_offset[None, ])
+    #     dof_pos_new.data.clamp_(g1_23_fk.joints_range[:, 0, None], g1_23_fk.joints_range[:, 1, None])
+    #     pose_aa_g1_23_new = torch.cat([gt_root_rot[None, :, None], g1_23_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2)
+    #     fk_return = g1_23_fk.fk_batch(pose_aa_g1_23_new, root_trans_offset[None, ])
 
-        root_trans_offset_dump = root_trans_offset.clone()
+    #     root_trans_offset_dump = root_trans_offset.clone()
 
-        root_trans_offset_dump[..., 2] -= fk_return.global_translation[..., 2].min().item() - 0.08
+    #     root_trans_offset_dump[..., 2] -= fk_return.global_translation[..., 2].min().item() - 0.08
         
-        data_dump[data_key]={
-                "root_trans_offset": root_trans_offset_dump.squeeze().cpu().detach().numpy(),
-                "pose_aa": pose_aa_g1_23_new.squeeze().cpu().detach().numpy(),   
-                "dof": dof_pos_new.squeeze().detach().cpu().numpy(), 
-                "root_rot": sRot.from_rotvec(gt_root_rot.cpu().numpy()).as_quat(),
-                "fps": 30
-                }
+    #     data_dump[data_key]={
+    #             "root_trans_offset": root_trans_offset_dump.squeeze().cpu().detach().numpy(),
+    #             "pose_aa": pose_aa_g1_23_new.squeeze().cpu().detach().numpy(),   
+    #             "dof": dof_pos_new.squeeze().detach().cpu().numpy(), 
+    #             "root_rot": sRot.from_rotvec(gt_root_rot.cpu().numpy()).as_quat(),
+    #             "fps": 30
+    #             }
         
-        # print(f"dumping {data_key} for testing, remove the line if you want to process all data")
-        # import ipdb; ipdb.set_trace()
-        joblib.dump(data_dump, "data/g1_23/test.pkl")
+    #     # print(f"dumping {data_key} for testing, remove the line if you want to process all data")
+    #     # import ipdb; ipdb.set_trace()
+    #     joblib.dump(data_dump, "data/g1_23/test.pkl")
     
         
-    # import ipdb; ipdb.set_trace()
-    joblib.dump(data_dump, "data/g1_23/amass_all.pkl")
+    # # import ipdb; ipdb.set_trace()
+    # joblib.dump(data_dump, "data/g1_23/amass_all.pkl")
+    output_root = "data/g1_23"
+    for data_key in pbar:
+        try:
+            # 1. 构造保存路径
+            relative_path = key_name_to_pkls[data_key][len(amass_root):].lstrip("/")
+            first_folder = relative_path.split("/")[0]
+            action_name = data_key.replace("0-", "")
+            save_dir = os.path.join(output_root, first_folder)
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, f"{action_name}.pkl")
+
+            # 2. 如果已存在，跳过处理
+            if os.path.exists(save_path):
+                pbar.set_description_str(f"Skipping existing {action_name}")
+                continue
+            
+            amass_data = load_amass_data(key_name_to_pkls[data_key])
+            skip = int(amass_data['fps']//30)
+            trans = torch.from_numpy(amass_data['trans'][::skip]).float().to(device)
+            N = trans.shape[0]
+            pose_aa_walk = torch.from_numpy(np.concatenate((amass_data['pose_aa'][::skip, :66], np.zeros((N, 6))), axis = -1)).float().to(device)
+
+
+            verts, joints = smpl_parser_n.get_joints_verts(pose_aa_walk, torch.zeros((1, 10)).to(device), trans)
+            offset = joints[:, 0] - trans
+            root_trans_offset = trans + offset
+
+            pose_aa_g1_23 = np.repeat(np.repeat(sRot.identity().as_rotvec()[None, None, None, ], 23, axis = 2), N, axis = 1)
+            pose_aa_g1_23[..., 0, :] = (sRot.from_rotvec(pose_aa_walk.cpu().numpy()[:, :3]) * sRot.from_quat([0.5, 0.5, 0.5, 0.5]).inv()).as_rotvec()
+            pose_aa_g1_23 = torch.from_numpy(pose_aa_g1_23).float().to(device)
+            gt_root_rot = torch.from_numpy((sRot.from_rotvec(pose_aa_walk.cpu().numpy()[:, :3]) * sRot.from_quat([0.5, 0.5, 0.5, 0.5]).inv()).as_rotvec()).float().to(device)
+
+            dof_pos = torch.zeros((1, N, dof_num, 1)).to(device)
+
+            dof_pos_new = Variable(dof_pos, requires_grad=True)
+            optimizer_pose = torch.optim.Adadelta([dof_pos_new],lr=100)
+
+            for iteration in range(500):
+                verts, joints = smpl_parser_n.get_joints_verts(pose_aa_walk, shape_new, trans)
+                pose_aa_g1_23_new = torch.cat([gt_root_rot[None, :, None], g1_23_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2).to(device)
+                fk_return = g1_23_fk.fk_batch(pose_aa_g1_23_new, root_trans_offset[None, ])
+                
+                diff = fk_return['global_translation_extend'][:, :, g1_23_joint_pick_idx] - joints[:, smpl_joint_pick_idx]
+                loss_g = diff.norm(dim = -1).mean() 
+                loss = loss_g
+                
+                
+                pbar.set_description_str(f"{iteration} {loss.item() * 1000}")
+
+                optimizer_pose.zero_grad()
+                loss.backward()
+                optimizer_pose.step()
+                
+                dof_pos_new.data.clamp_(g1_23_fk.joints_range[:, 0, None], g1_23_fk.joints_range[:, 1, None])
+                
+            dof_pos_new.data.clamp_(g1_23_fk.joints_range[:, 0, None], g1_23_fk.joints_range[:, 1, None])
+            pose_aa_g1_23_new = torch.cat([gt_root_rot[None, :, None], g1_23_rotation_axis * dof_pos_new, torch.zeros((1, N, 2, 3)).to(device)], axis = 2)
+            fk_return = g1_23_fk.fk_batch(pose_aa_g1_23_new, root_trans_offset[None, ])
+
+            root_trans_offset_dump = root_trans_offset.clone()
+
+            root_trans_offset_dump[..., 2] -= fk_return.global_translation[..., 2].min().item() - 0.08
+            
+                    # 保存成单个 .pkl
+            relative_path = key_name_to_pkls[data_key][len(amass_root):].lstrip("/")
+            first_folder = relative_path.split("/")[0]
+            action_name = data_key.replace("0-", "")
+
+            save_dir = os.path.join(output_root, first_folder)
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, f"{action_name}.pkl")
+
+            data_dict = {
+                "root_trans_offset": root_trans_offset_dump.squeeze().cpu().detach().numpy(),
+                "pose_aa": pose_aa_g1_23_new.squeeze().cpu().detach().numpy(),
+                "dof": dof_pos_new.squeeze().detach().cpu().numpy(),
+                "root_rot": sRot.from_rotvec(gt_root_rot.cpu().numpy()).as_quat(),
+                "fps": 30
+            }
+
+            joblib.dump({action_name:data_dict}, save_path)
+            print(f"Saved: {save_path}")
+        except Exception as e:
+            print(f"[Error] Skipped {data_key} due to: {str(e)}")
+            continue
